@@ -100,6 +100,7 @@ export type PlacementVisualStatus =
 export interface CityRendererCallbacks {
   onHoverTile?(tile: TileCoordinate | null): void;
   onGroundClick?(tile: TileCoordinate): void;
+  onInspectTile?(tile: TileCoordinate): void;
   onCameraHeadingChange?(heading: number): void;
 }
 
@@ -632,7 +633,7 @@ export async function createCityRenderer(
         x: pointerInfo.event.clientX,
         y: pointerInfo.event.clientY,
       };
-      if (pointerInfo.event.button === 0 && buildTool !== null) {
+      if (pointerInfo.event.button === 0) {
         primaryClickStart = {
           x: pointerInfo.event.clientX,
           y: pointerInfo.event.clientY,
@@ -650,11 +651,17 @@ export async function createCityRenderer(
         pointerInfo.event.button === 0 &&
         buildTool !== null &&
         primaryClickStart !== null;
-      if (pointerInfo.event.button === 0) primaryClickStart = null;
       if (shouldBuild) {
         const tile = pickedTile();
         if (tile) callbacks.onGroundClick?.(tile);
+      } else if (
+        pointerInfo.event.button === 0 &&
+        primaryClickStart !== null
+      ) {
+        const tile = pickedTile();
+        if (tile) callbacks.onInspectTile?.(tile);
       }
+      if (pointerInfo.event.button === 0) primaryClickStart = null;
     }
   });
 

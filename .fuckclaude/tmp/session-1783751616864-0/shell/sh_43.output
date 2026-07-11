@@ -1,0 +1,15 @@
+
+> empire-web-game@0.0.0 typecheck /Users/bytedance/Documents/empire
+> pnpm -r typecheck && tsc -p tsconfig.tools.json --noEmit
+
+Scope: 5 of 6 workspace projects
+packages/protocol typecheck$ tsc -p tsconfig.json --noEmit
+packages/protocol typecheck: Done
+packages/renderer typecheck$ tsc -p tsconfig.json --noEmit
+packages/simulation typecheck$ tsc -p tsconfig.json --noEmit
+packages/persistence typecheck$ tsc -p tsconfig.json --noEmit
+packages/persistence typecheck: Done
+packages/simulation typecheck: Done
+packages/renderer typecheck: Done
+apps/game-web typecheck$ tsc -p tsconfig.json --noEmit
+apps/game-web typecheck: Done

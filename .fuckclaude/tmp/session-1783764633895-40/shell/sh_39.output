@@ -1,0 +1,13 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/Users/bytedance/Documents/empire[39m
+
+ [32m✓[39m packages/simulation/src/citizen-life.test.ts[2m > [22m入住市民的连续生活与工作[2m > [22m住宅完成入住的同一 tick 产生一名位于门前道路的市民代表[32m 4[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/citizen-life.test.ts[2m > [22m入住市民的连续生活与工作[2m > [22m市民逐格上工、停留工作，再逐格返家而不是瞬移[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/citizen-life.test.ts[2m > [22m入住市民的连续生活与工作[2m > [22m途中断路不会让市民穿越空地，补路后恢复通勤[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/citizen-life.test.ts[2m > [22m入住市民的连续生活与工作[2m > [22m拆除住宅会清理市民，拆除岗位会重新分配为无业活动[32m 1[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 18:28:07
+[2m   Duration [22m 261ms[2m (transform 95ms, setup 0ms, import 167ms, tests 8ms, environment 0ms)[22m
+

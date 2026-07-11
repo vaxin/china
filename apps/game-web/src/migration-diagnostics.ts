@@ -5,7 +5,7 @@ function tileKey(tile: { x: number; y: number }): string {
   return `${tile.x},${tile.y}`;
 }
 
-function connectedRoadKeys(snapshot: WorldSnapshot): Set<string> {
+export function connectedRoadKeys(snapshot: WorldSnapshot): Set<string> {
   const roads = new Map(snapshot.roads.map((road) => [tileKey(road), road]));
   const entrance = tileKey(CITY_GATE_TILE);
   if (!roads.has(entrance)) return new Set();
@@ -30,7 +30,7 @@ function connectedRoadKeys(snapshot: WorldSnapshot): Set<string> {
   return connected;
 }
 
-function houseBorderTiles(
+export function houseBorderTiles(
   house: WorldSnapshot["buildings"][number],
   map: WorldSnapshot["map"],
 ) {

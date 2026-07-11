@@ -1,0 +1,25 @@
+
+> empire-web-game@0.0.0 typecheck /Users/bytedance/Documents/empire
+> pnpm -r typecheck && tsc -p tsconfig.tools.json --noEmit
+
+Scope: 5 of 6 workspace projects
+packages/protocol typecheck$ tsc -p tsconfig.json --noEmit
+packages/protocol typecheck: Done
+packages/persistence typecheck$ tsc -p tsconfig.json --noEmit
+packages/renderer typecheck$ tsc -p tsconfig.json --noEmit
+packages/simulation typecheck$ tsc -p tsconfig.json --noEmit
+packages/persistence typecheck: Done
+packages/simulation typecheck: Done
+packages/renderer typecheck: Done
+apps/game-web typecheck$ tsc -p tsconfig.json --noEmit
+apps/game-web typecheck: src/PopulationDetailPanel.tsx(527,35): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+apps/game-web typecheck: src/PopulationDetailPanel.tsx(528,43): error TS2345: Argument of type 'number' is not assignable to parameter of type 'readonly NearbyBuilding[]'.
+apps/game-web typecheck: src/PopulationDetailPanel.tsx(565,30): error TS2551: Property 'fiveElement' does not exist on type 'FengShuiAssessment'. Did you mean 'siteElement'?
+apps/game-web typecheck: src/PopulationDetailPanel.tsx(565,47): error TS2339: Property 'conflicting' does not exist on type '{ auspicious: string; neutral: string; inauspicious: string; }'.
+apps/game-web typecheck: src/PopulationDetailPanel.tsx(565,47): error TS2339: Property 'harmonious' does not exist on type '{ auspicious: string; neutral: string; inauspicious: string; }'.
+apps/game-web typecheck: src/PopulationDetailPanel.tsx(644,36): error TS2339: Property 'value' does not exist on type '{ score: number; wageModifier: number; canMigrate: boolean; }'.
+apps/game-web typecheck: Failed
+/Users/bytedance/Documents/empire/apps/game-web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @empire/game-web@0.0.0 typecheck: `tsc -p tsconfig.json --noEmit`
+Exit status 2
+ ELIFECYCLE  Command failed with exit code 2.

@@ -1,0 +1,20 @@
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m四类职业人物各有两帧独立的 v4 高保真素材
+[31m[1mAssertionError[22m: expected 2.7 to be greater than 5[39m
+[36m [2m❯[22m packages/renderer/src/runtime-assets.test.ts:[2m77:35[22m[39m
+    [90m 75|[39m         expect(asset.url).toContain(`/runtime/v4/people/${role}-walk-`…
+    [90m 76|[39m         [34mexpect[39m(asset[33m.[39mpixelHeight)[33m.[39m[34mtoBeGreaterThan[39m([34m700[39m)[33m;[39m
+    [90m 77|[39m         [34mexpect[39m(asset[33m.[39mworldHeight)[33m.[39m[34mtoBeGreaterThan[39m([34m5[39m)[33m;[39m
+    [90m   |[39m                                   [31m^[39m
+    [90m 78|[39m       }
+    [90m 79|[39m     }
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m39 passed[39m[22m[90m (40)[39m
+[2m   Start at [22m 18:28:17
+[2m   Duration [22m 149ms[2m (transform 187ms, setup 0ms, import 255ms, tests 19ms, environment 0ms)[22m
+

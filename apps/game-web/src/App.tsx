@@ -58,6 +58,8 @@ import {
 } from "./crop-catalog";
 import { constructionDiagnostic } from "./migration-diagnostics";
 import { PopulationDetailPanel } from "./PopulationDetailPanel";
+import { HouseListPanel } from "./HouseListPanel";
+import { BuildingDetailPanel } from "./BuildingDetailPanel";
 
 type GameStatus = "正在载入城市…" | "游戏已就绪" | "无法启动游戏";
 type SaveStatus =
@@ -178,6 +180,7 @@ export function App() {
   >(null);
   const keyboardTileRef = useRef<TileCoordinate>({ x: 16, y: 16 });
   const simulationSpeedRef = useRef<0 | 1 | 2 | 4>(1);
+  const inspectTileRef = useRef<((tile: TileCoordinate) => void) | null>(null);
   const applyLaborPolicyRef = useRef<
     ((policy: LaborPolicyView) => void) | null
   >(null);
@@ -253,6 +256,13 @@ export function App() {
   const [populationPanelOpen, setPopulationPanelOpen] = useState(false);
   const populationPanelOpenRef = useRef(false);
   const [populationPanelData, setPopulationPanelData] = useState<WorldSnapshot | null>(null);
+  const [housePanelOpen, setHousePanelOpen] = useState(false);
+  const housePanelOpenRef = useRef(false);
+  const [housePanelData, setHousePanelData] = useState<WorldSnapshot | null>(null);
+  const [housePanelFocusId, setHousePanelFocusId] = useState<number | null>(null);
+  const [buildingPanelOpen, setBuildingPanelOpen] = useState(false);
+  const buildingPanelOpenRef = useRef(false);
+  const [buildingPanelData, setBuildingPanelData] = useState<{ snapshot: WorldSnapshot; buildingId: number } | null>(null);
   const [simulationTick, setSimulationTick] = useState(0);
   const [simulationSpeed, setSimulationSpeed] = useState<0 | 1 | 2 | 4>(1);
   const [eraName, setEraName] = useState("聚落奠基");
@@ -559,6 +569,9 @@ export function App() {
       );
       if (populationPanelOpenRef.current) {
         setPopulationPanelData(snapshot);
+      }
+      if (housePanelOpenRef.current) {
+        setHousePanelData(snapshot);
       }
       setSimulationTick(snapshot.tick);
       const era = eraStateAtTick(snapshot.tick);
@@ -1031,6 +1044,7 @@ export function App() {
         renderer = await createCityRenderer(canvas, {
           onHoverTile: refreshPreview,
           onGroundClick: (tile) => void buildAt(tile),
+          onInspectTile: (tile) => inspectTileRef.current?.(tile),
           onCameraHeadingChange: setCameraHeading,
         });
         if (cancelled) {
@@ -1105,6 +1119,54 @@ export function App() {
       const snapshot = snapshotRef.current;
       if (snapshot) setPopulationPanelData(snapshot);
     }
+  };
+
+  const toggleHousePanel = (focusHouseId?: number | null) => {
+    const nextOpen = focusHouseId !== undefined || !housePanelOpenRef.current;
+    housePanelOpenRef.current = nextOpen;
+    setHousePanelOpen(nextOpen);
+    if (nextOpen) {
+      setHousePanelFocusId(focusHouseId ?? null);
+      const snapshot = snapshotRef.current;
+      if (snapshot) setHousePanelData(snapshot);
+    }
+  };
+
+  const handleInspectTile = (tile: TileCoordinate) => {
+    const snapshot = snapshotRef.current;
+    if (!snapshot) return;
+    const building = snapshot.buildings.find(
+      (b) =>
+        tile.x >= b.x &&
+        tile.x < b.x + b.footprint.width &&
+        tile.y >= b.y &&
+        tile.y < b.y + b.footprint.height,
+    );
+    if (!building) return;
+
+    if (building.typeId === "house") {
+      // Close population panel, open house detail
+      populationPanelOpenRef.current = false;
+      setPopulationPanelOpen(false);
+      toggleHousePanel(building.id);
+    } else {
+      // Open generic building panel
+      populationPanelOpenRef.current = false;
+      setPopulationPanelOpen(false);
+      housePanelOpenRef.current = false;
+      setHousePanelOpen(false);
+      buildingPanelOpenRef.current = true;
+      setBuildingPanelOpen(true);
+      setBuildingPanelData({ snapshot, buildingId: building.id });
+    }
+  };
+
+  inspectTileRef.current = handleInspectTile;
+
+  const closeBuildingPanel = () => {
+    buildingPanelOpenRef.current = false;
+    setBuildingPanelOpen(false);
+    setBuildingPanelData(null);
   };
 
   const selectCrop = (cropType: CropType) => {
@@ -1228,7 +1290,20 @@ export function App() {
             <dt>渲染</dt>
             <dd data-testid="renderer-name">{rendererName}</dd>
           </div>
-          <div>
+          <div
+            className={`stat-clickable${housePanelOpen ? " active" : ""}`}
+            onClick={() => toggleHousePanel()}
+            role="button"
+            tabIndex={0}
+            aria-expanded={housePanelOpen}
+            aria-label="查看住宅列表"
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                toggleHousePanel();
+              }
+            }}
+          >
             <dt>住宅</dt>
             <dd data-testid="building-count">{buildingCount}</dd>
           </div>
@@ -1405,8 +1480,33 @@ export function App() {
       </header>
 
       {populationPanelOpen && populationPanelData && (
-        <PopulationDetailPanel snapshot={populationPanelData} />
+        <PopulationDetailPanel
+          snapshot={populationPanelData}
+          onClose={togglePopulationPanel}
+        />
       )}
+
+      {housePanelOpen && housePanelData && (
+        <HouseListPanel
+          snapshot={housePanelData}
+          onClose={() => toggleHousePanel()}
+          focusHouseId={housePanelFocusId}
+        />
+      )}
+
+      {buildingPanelOpen && buildingPanelData && (() => {
+        const building = buildingPanelData.snapshot.buildings.find(
+          (b) => b.id === buildingPanelData.buildingId,
+        );
+        if (!building) return null;
+        return (
+          <BuildingDetailPanel
+            building={building}
+            snapshot={buildingPanelData.snapshot}
+            onClose={closeBuildingPanel}
+          />
+        );
+      })()}
 
       <aside className="build-dock" aria-label="建造工具">
         <span className="dock-label">民生</span>

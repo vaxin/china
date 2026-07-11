@@ -2001,17 +2001,25 @@ function reconcileCitizens(world: WorldState): void {
     newlyCreated.add(citizen.id);
   }
 
+  const connected = connectedRoadKeys(world.roads);
+  const allBuildingsById = new Map(
+    world.buildings.map((building) => [building.id, building]),
+  );
   const occupiedWorkplaces = new Set<number>();
   for (const citizen of world.citizens) {
-    if (
-      citizen.workplaceId !== null &&
-      workplacesById.has(citizen.workplaceId) &&
-      !occupiedWorkplaces.has(citizen.workplaceId)
-    ) {
-      occupiedWorkplaces.add(citizen.workplaceId);
-      continue;
-    }
     if (citizen.workplaceId !== null) {
+      const building = allBuildingsById.get(citizen.workplaceId);
+      if (
+        building &&
+        !isHouse(building) &&
+        footprintBorderTiles(building).some((tile) =>
+          connected.has(tileKey(tile)),
+        ) &&
+        !occupiedWorkplaces.has(citizen.workplaceId)
+      ) {
+        occupiedWorkplaces.add(citizen.workplaceId);
+        continue;
+      }
       citizen.workplaceId = null;
       citizen.state = "returning";
       citizen.dwellTicks = 0;
@@ -2038,7 +2046,7 @@ function reconcileCitizens(world: WorldState): void {
     const workplace =
       citizen.workplaceId === null
         ? null
-        : (workplacesById.get(citizen.workplaceId) ?? null);
+        : (allBuildingsById.get(citizen.workplaceId) ?? null);
 
     if (citizen.state === "commuting") {
       const path = workplace
@@ -2056,6 +2064,10 @@ function reconcileCitizens(world: WorldState): void {
         if (path.length <= 2) {
           citizen.state = "working";
           citizen.dwellTicks = 1;
+          if (workplace) {
+            citizen.x = workplace.x;
+            citizen.y = workplace.y;
+          }
         }
         continue;
       }
@@ -2068,6 +2080,16 @@ function reconcileCitizens(world: WorldState): void {
         citizen.dwellTicks = 0;
         continue;
       } else {
+        const roadByKey = new Map(
+          world.roads.map((road) => [tileKey(road), road] as const),
+        );
+        const borderTile = footprintBorderTiles(workplace)
+          .filter((tile) => roadByKey.has(tileKey(tile)))
+          .sort((left, right) => tileKey(left) - tileKey(right))[0];
+        if (borderTile) {
+          citizen.x = borderTile.x;
+          citizen.y = borderTile.y;
+        }
         citizen.state = "returning";
       }
     }

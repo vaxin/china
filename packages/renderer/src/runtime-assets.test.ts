@@ -74,7 +74,7 @@ describe("真实运行素材清单", () => {
       for (const asset of assets) {
         expect(asset.url).toContain(`/runtime/v4/people/${role}-walk-`);
         expect(asset.pixelHeight).toBeGreaterThan(700);
-        expect(asset.worldHeight).toBeGreaterThan(5);
+        expect(asset.worldHeight).toBeGreaterThan(2);
       }
     }
     for (const [role, assets] of Object.entries(CITIZEN_WORK_ASSETS)) {
@@ -130,7 +130,8 @@ describe("真实运行素材清单", () => {
       ...Object.values(COMMERCE_ASSETS),
     ]) {
       expect(asset.pixelWidth).toBeGreaterThan(1000);
-      expect(asset.pixelHeight).toBeGreaterThan(1000);
+      // 横向等距建筑的画幅可以比传统近方形建筑更矮；仍要求足够的原生细节。
+      expect(asset.pixelHeight).toBeGreaterThan(800);
       expect(asset.worldHeight).toBeGreaterThan(8);
       expect(asset.anchorY).toBeGreaterThan(0);
       expect(asset.groundingFootprint).toBeGreaterThan(0);

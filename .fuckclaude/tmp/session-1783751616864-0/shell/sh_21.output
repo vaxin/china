@@ -1,0 +1,2 @@
+bytedance        53480   0.0  0.1 413419776  55824   ??  S     2:40下午   0:00.58 /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node --experimental-vm-modules /var/folders/xg/5d5x5dp52tb41rx5h8zywvym0000gn/T/.tmpeUeQA5/kernel.js --session-id ada8ec1cbe28478bb59b1614cb9bd2fa --working-dir /Users/bytedance/Documents/empire
+bytedance        27801   0.0  0.2 435416048  87504 s000  S+    2:32下午   0:02.96 /Users/bytedance/.nvm/versions/node/v22.18.0/bin/node /Users/bytedance/dev/code/fuckclaude/desktop/node_modules/vite/bin/vite.js --host 127.0.0.1 --port 1520

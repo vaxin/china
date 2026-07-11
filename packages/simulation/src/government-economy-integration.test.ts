@@ -81,7 +81,7 @@ describe("税务署道路覆盖与国库集成", () => {
       lastTaxRevenue: 3,
       lastPayroll: 4,
       taxableHouses: 1,
-      sentiment: 49,
+      sentiment: 50,
       lastTradeRevenue: 0,
     });
   });

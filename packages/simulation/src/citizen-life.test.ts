@@ -66,7 +66,7 @@ describe("入住市民的连续生活与工作", () => {
 
     advanceTicks(world, 1);
     expect(snapshotWorld(world)).toMatchObject({
-      citizens: [{ x: 6, y: 15, state: "working", dwellTicks: 1 }],
+      citizens: [{ x: 6, y: 14, state: "working", dwellTicks: 1 }],
     });
 
     advanceTicks(world, 2);
@@ -95,7 +95,7 @@ describe("入住市民的连续生活与工作", () => {
     });
     advanceTicks(world, 4);
     expect(snapshotWorld(world)).toMatchObject({
-      citizens: [{ state: "working", x: 6, y: 15 }],
+      citizens: [{ state: "working", x: 6, y: 14 }],
     });
   });
 

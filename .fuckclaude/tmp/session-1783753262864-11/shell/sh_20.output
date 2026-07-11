@@ -1,0 +1,26 @@
+origin	git@github.com:vaxin/china.git (fetch)
+origin	git@github.com:vaxin/china.git (push)
+---
+9d5dfe0 Initial commit: empire project
+---
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .fuckclaude/file-history/session-1783751616864-0/state.json
+	modified:   .fuckclaude/sessions/650822fb0a3d4d2e/last_llm_http.debug.json
+	modified:   .fuckclaude/sessions/650822fb0a3d4d2e/session-1783751616864-0.jsonl
+	deleted:    .fuckclaude/sessions/650822fb0a3d4d2e/session-1783751616864-0.rot-1783752992585.jsonl
+	deleted:    .fuckclaude/sessions/650822fb0a3d4d2e/session-1783751616864-0.rot-1783752992597.jsonl
+	modified:   .fuckclaude/sessions/650822fb0a3d4d2e/session-1783753262864-11.jsonl
+	modified:   .fuckclaude/tmp/session-1783753262864-11/shell/sh_19.output
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.fuckclaude/sessions/650822fb0a3d4d2e/session-1783751616864-0.rot-1783753408718.jsonl
+	.fuckclaude/sessions/650822fb0a3d4d2e/session-1783751616864-0.rot-1783753408768.jsonl
+	.fuckclaude/tmp/session-1783753262864-11/shell/sh_20.output
+
+no changes added to commit (use "git add" and/or "git commit -a")

@@ -1,0 +1,60 @@
+ [32m✓[39m packages/simulation/src/feng-shui.test.ts[2m > [22m风水与宜居度解释层[2m > [22m宜居度只看服务与污染，不因五行状态偷偷改分[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/labor-economy.test.ts[2m > [22m季节劳动力经济[2m > [22m三月小麦农忙而白菜休耕，八月则反转[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/labor-economy.test.ts[2m > [22m季节劳动力经济[2m > [22m缺工时按行业优先级分配且不会创造额外工人[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/labor-economy.test.ts[2m > [22m季节劳动力经济[2m > [22m工资档位同时改变劳动参与率与每 tick 工资支出[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/multi-crop-production.test.ts[2m > [22m多作物农场生产[2m > [22m建造时把所选作物写入权威状态[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/multi-crop-production.test.ts[2m > [22m多作物农场生产[2m > [22m小麦、大豆、水稻、粟、白菜在同一年按各自收获月依次入库[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/multi-crop-production.test.ts[2m > [22m多作物农场生产[2m > [22m每年只收获一次且满仓后不会溢出[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/trade-export.test.ts[2m > [22m贸易站出口闭环[2m > [22m通商、连路、有货且有商业劳力时，每个商队周期出口并增加国库[32m 4[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/trade-export.test.ts[2m > [22m贸易站出口闭环[2m > [22m尚未通商 时不会搬货或凭空赚钱[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/trade-export.test.ts[2m > [22m贸易站出口闭环[2m > [22m道路断开 时不会搬货或凭空赚钱[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/era-tick-revision.test.ts[2m > [22m年代跨年持久化[2m > [22m即使城市空闲，第 12 tick 跨年也产生一次可保存 revision[32m 3[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/government-economy-integration.test.ts[2m > [22m税务署道路覆盖与国库集成[2m > [22m重税命令保存后，连路税务署按月征税并扣除工资[32m 3[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/government-economy-integration.test.ts[2m > [22m税务署道路覆盖与国库集成[2m > [22m断路时不征幽灵税，但已分配官吏工资仍真实支出[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/government-economy-integration.test.ts[2m > [22m税务署道路覆盖与国库集成[2m > [22m税率、累计国库和上月收支可随快照恢复[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/diplomacy.test.ts[2m > [22m外交赠礼与使者延迟[2m > [22m两份赠礼扣库后由使者旅行三 tick，抵达才开放贸易[32m 5[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/diplomacy.test.ts[2m > [22m外交赠礼与使者延迟[2m > [22m缺货赠礼不会生成幽灵使者[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/world-hydration.test.ts[2m > [22m世界恢复[2m > [22m从存档恢复后保持建筑，并从已有最大 ID 之后继续建造[32m 5[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/world-hydration.test.ts[2m > [22m世界恢复[2m > [22m最大安全实体 ID 耗尽后原子拒绝新建筑并保持可保存快照[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/world-hydration.test.ts[2m > [22m世界恢复[2m > [22mtick 或 revision 计数耗尽时拒绝命令且不产生非安全整数[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/world-hydration.test.ts[2m > [22m世界恢复[2m > [22m临近 revision 上限且无物质变化时批量与逐 tick 仍等价[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/shennong-offering.test.ts[2m > [22m神农供奉[2m > [22m每次供奉真实扣一份指定粮食并提高一级好感[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/shennong-offering.test.ts[2m > [22m神农供奉[2m > [22m缺货供奉原子拒绝且不凭空增加好感[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/shennong-offering.test.ts[2m > [22m神农供奉[2m > [22m三阶好感让收获加倍但仍受农场容量限制，跨年衰减一级[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/migration-attractiveness.test.ts[2m > [22m工资与民心共同决定流民迁入[2m > [22m三档工资提供明确吸引力修正并使用统一门槛[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/migration-attractiveness.test.ts[2m > [22m工资与民心共同决定流民迁入[2m > [22m低民心常薪时宅基地无人来，提高工资后才从城门出现[32m 3[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/government-economy.test.ts[2m > [22m政府税收与国库[2m > [22m只对税务道路覆盖住宅征税，住宅等级和宜居度提高税基[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/government-economy.test.ts[2m > [22m政府税收与国库[2m > [22m税务署缺工会按实际人手降低征收效率，断路住宅不交幽灵税[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/government-economy.test.ts[2m > [22m政府税收与国库[2m > [22m税收与工资同月真实进入国库且保持安全整数[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/building-placement.test.ts[2m > [22m住宅建造规则[2m > [22m在完整容纳 2×2 占地的空地建造后，世界只出现一座住宅[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/building-placement.test.ts[2m > [22m住宅建造规则[2m > [22m与已有住宅重叠时明确拒绝并保持建筑状态不变[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/building-placement.test.ts[2m > [22m住宅建造规则[2m > [22m左侧负坐标 时拒绝建造且不改变世界[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/building-placement.test.ts[2m > [22m住宅建造规则[2m > [22m上侧负坐标 时拒绝建造且不改变世界[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/building-placement.test.ts[2m > [22m住宅建造规则[2m > [22m右下角无法容纳 2×2 占地 时拒绝建造且不改变世界[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/building-placement.test.ts[2m > [22m住宅建造规则[2m > [22m右边越界 时拒绝建造且不改变世界[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/building-placement.test.ts[2m > [22m住宅建造规则[2m > [22m下边越界 时拒绝建造且不改变世界[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/building-placement.test.ts[2m > [22m住宅建造规则[2m > [22m同一格连续收到两条建造命令时，第一条成功、第二条拒绝且最终只有一座[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/new-year-festival.test.ts[2m > [22m二月新年祭[2m > [22m真实扣一份粮和 20 国库，提升 10 民心并记录年份[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/new-year-festival.test.ts[2m > [22m二月新年祭[2m > [22m同一年不能重复举办获取收益[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/new-year-festival.test.ts[2m > [22m二月新年祭[2m > [22m非二月 时原子拒绝[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/new-year-festival.test.ts[2m > [22m二月新年祭[2m > [22m没有娱乐设施 时原子拒绝[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/new-year-festival.test.ts[2m > [22m二月新年祭[2m > [22m没有粮食 时原子拒绝[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/new-year-festival.test.ts[2m > [22m二月新年祭[2m > [22m国库不足有独立拒绝原因[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/food-quality.test.ts[2m > [22m食物品类与品质[2m > [22m空库存包含全部作物键且总量为零[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/food-quality.test.ts[2m > [22m食物品类与品质[2m > [22m1 种食物映射为 bland[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/food-quality.test.ts[2m > [22m食物品类与品质[2m > [22m2 种食物映射为 plain[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/food-quality.test.ts[2m > [22m食物品类与品质[2m > [22m3 种食物映射为 appetizing[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/food-quality.test.ts[2m > [22m食物品类与品质[2m > [22m4 种食物映射为 tasty[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/food-quality.test.ts[2m > [22m食物品类与品质[2m > [22m5 种食物映射为 tasty[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/city-sentiment.test.ts[2m > [22m税率、工资与饱腹共同改变城市民心[2m > [22m重税降低民心，优厚工资和全员饱腹只能部分抵消[32m 1[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/city-sentiment.test.ts[2m > [22m税率、工资与饱腹共同改变城市民心[2m > [22m轻税、常薪与饱腹提升民心，低薪和缺粮会加剧不满[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/city-sentiment.test.ts[2m > [22m税率、工资与饱腹共同改变城市民心[2m > [22m无居民时民心向 50 自然恢复，避免死锁[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/labor-policy-command.test.ts[2m > [22m劳动力政策权威命令[2m > [22m修改工资和行业优先级会原子保存并可恢复[32m 2[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/labor-policy-command.test.ts[2m > [22m劳动力政策权威命令[2m > [22m重复提交同一策略不制造 revision[32m 0[2mms[22m[39m
+ [32m✓[39m packages/simulation/src/placement-preview.test.ts[2m > [22m住宅预览判定[2m > [22m空地、重叠地和越界地返回与权威建造一致的状态[32m 1[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m32 passed[39m[22m[90m (32)[39m
+[2m      Tests [22m [1m[32m160 passed[39m[22m[90m (160)[39m
+[2m   Start at [22m 19:12:11
+[2m   Duration [22m 726ms[2m (transform 1.53s, setup 0ms, import 3.92s, tests 199ms, environment 2ms)[22m
+

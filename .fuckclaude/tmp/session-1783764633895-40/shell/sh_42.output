@@ -1,0 +1,15 @@
+ [32m✓[39m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m为 soybean 农场返回独立透明作物素材[32m 0[2mms[22m[39m
+ [32m✓[39m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m为 rice 农场返回独立透明作物素材[32m 0[2mms[22m[39m
+ [32m✓[39m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m为 millet 农场返回独立透明作物素材[32m 0[2mms[22m[39m
+ [32m✓[39m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m为 cabbage 农场返回独立透明作物素材[32m 0[2mms[22m[39m
+ [32m✓[39m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m麻田和织坊使用独立 v3 产业素材[32m 0[2mms[22m[39m
+ [32m✓[39m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m兵器作坊和步兵营使用独立 v3 军事素材[32m 0[2mms[22m[39m
+ [32m✓[39m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m政府、娱乐与贸易建筑各自使用独立 v3 高保真素材[32m 0[2mms[22m[39m
+ [32m✓[39m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m城门使用独立地面锚点，避免入口和道路错位[32m 0[2mms[22m[39m
+ [32m✓[39m packages/renderer/src/runtime-assets.test.ts[2m > [22m真实运行素材清单[2m > [22m道路 0～15 四邻接掩码一一对应 16 张 v2 真实贴图[32m 0[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[32m40 passed[39m[22m[90m (40)[39m
+[2m   Start at [22m 18:28:33
+[2m   Duration [22m 144ms[2m (transform 175ms, setup 0ms, import 234ms, tests 17ms, environment 0ms)[22m
+
