@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "batchId": "high-fidelity-anchor-batch-v01",
+  "createdAt": "2026-07-10",
+  "generator": "Codex built-in Image Gen",
+  "status": "approved-design-anchors",
+  "promptRecord": "prompts/first_batch_v01.md",
+  "assets": [
+    {
+      "id": "style_anchor_city_v01",
+      "path": "anchors/style_anchor_city_v01.png",
+      "role": "style-anchor",
+      "status": "approved",
+      "dimensions": [1672, 941],
+      "sha256": "535d67c91e8674bbf65a3c5fd73a42d33c1c2fe9415a32ce16aedf928212e75c",
+      "source": "Image Gen",
+      "postProcessing": "Copied without pixel edits from the user-approved generation."
+    },
+    {
+      "id": "residential_construction_reference_v01",
+      "path": "concepts/residential_construction_reference_v01.png",
+      "role": "building-construction-reference",
+      "status": "approved",
+      "dimensions": [1774, 887],
+      "sha256": "5bdaf0ca070a0422310b0302ed4bef2e9aafc8e0c929dfadad3e9e4271cdac6c",
+      "source": "Image Gen",
+      "styleReference": "style_anchor_city_v01",
+      "postProcessing": "Copied without pixel edits."
+    },
+    {
+      "id": "villager_anchor_v01",
+      "path": "anchors/villager_anchor_v01.png",
+      "role": "character-anchor",
+      "status": "approved",
+      "dimensions": [1672, 941],
+      "sha256": "c571c27d2086eff44c9c81013c2812e4e73172d1c806df028df80bbb47e3299e",
+      "source": "Image Gen",
+      "styleReference": "style_anchor_city_v01",
+      "postProcessing": "Copied without pixel edits."
+    },
+    {
+      "id": "villager_action_reference_v01",
+      "path": "concepts/villager_action_reference_v01.png",
+      "role": "animation-key-pose-reference",
+      "status": "approved",
+      "dimensions": [1672, 941],
+      "sha256": "d68aad5439245425929b85a08a0a2f15bb7e6fc67c086d1517c03ff2a61f98a3",
+      "source": "Image Gen",
+      "styleReference": "style_anchor_city_v01",
+      "identityReference": "villager_anchor_v01",
+      "postProcessing": "Copied without pixel edits."
+    },
+    {
+      "id": "material_palette_reference_v01",
+      "path": "concepts/material_palette_reference_v01.png",
+      "role": "material-reference",
+      "status": "approved",
+      "dimensions": [1774, 887],
+      "sha256": "ab1922dc1398dacfab842f3d0cdfd7980ec056a0fa009194c8db122832a68723",
+      "source": "Image Gen",
+      "styleReference": "style_anchor_city_v01",
+      "postProcessing": "Copied without pixel edits."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@empire/game-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4173 --strictPort",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@babylonjs/core": "9.16.1",
+    "@empire/persistence": "workspace:*",
+    "@empire/protocol": "workspace:*",
+    "@empire/renderer": "workspace:*",
+    "@empire/simulation": "workspace:*",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  }
+}
