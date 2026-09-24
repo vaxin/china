@@ -1,21 +1,37 @@
 import {
+  Fragment,
   useEffect,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
+import {
+  CaretLeft,
+  CaretRight,
+  Coins,
+  Hammer,
+  Plant,
+  RoadHorizon,
+  Smiley,
+  Trash,
+  UsersThree,
+  Wall,
+  type Icon,
+} from "@phosphor-icons/react";
 import { GameSaveStore, RevisionSaveQueue } from "@empire/persistence";
-import type {
-  CropType,
-  GameCommand,
-  LaborPolicyView,
-  LaborSector,
-  TaxRate,
-  WageLevel,
-  WorldSnapshot,
+import {
+  DEFAULT_TERRAIN_CONTRACT,
+  type CropType,
+  type GameCommand,
+  type LaborPolicyView,
+  type LaborSector,
+  type TaxRate,
+  type WageLevel,
+  type WorldSnapshot,
 } from "@empire/protocol";
 import {
   createCityRenderer,
+  PERSON_ACTIVITY_PULSE_MS,
   type BuildTool,
   type CityRenderer,
   type PlacementVisualStatus,
@@ -33,6 +49,7 @@ import {
   evaluateMarketPlacement,
   evaluateMusicSchoolPlacement,
   evaluateRoadPlacement,
+  evaluateWallPlacement,
   evaluateWellPlacement,
   evaluateWeaverPlacement,
   evaluateWeaponsmithPlacement,
@@ -45,6 +62,7 @@ import {
   elementAtTile,
   eraStateAtTick,
   fengShuiAtSite,
+  hasVegetationObstacle,
   nextCitySentiment,
   migrationAttractiveness,
 } from "@empire/simulation";
@@ -59,6 +77,8 @@ import {
 import { constructionDiagnostic } from "./migration-diagnostics";
 import { PopulationDetailPanel } from "./PopulationDetailPanel";
 import { HouseListPanel } from "./HouseListPanel";
+import { summarizeCityLivelihood } from "./livelihood-view-model";
+import { advanceClockProgress, CLOCK_HEARTBEAT_MS } from "./simulation-clock";
 import { BuildingDetailPanel } from "./BuildingDetailPanel";
 
 type GameStatus = "正在载入城市…" | "游戏已就绪" | "无法启动游戏";
@@ -67,8 +87,10 @@ type SaveStatus =
 
 const rejectionMessages = {
   occupied: "该位置已被占用",
+  vegetation: "杂草植被阻挡营造，请先使用拆除工具清理",
   "out-of-bounds": "建筑不能超出地图边界",
-  "invalid-path": "道路路径必须连续且不能重复",
+  "steep-slope": "坡地不可营造，请选择平坦土地",
+  "invalid-path": "营造路径必须连续且不能重复",
   "nothing-to-demolish": "这里没有可拆除的对象",
   "not-found": "目标对象不存在",
   "insufficient-stock": "库存不足",
@@ -80,6 +102,7 @@ const rejectionMessages = {
 const constructionSuccessMessages = {
   house: "宅基地已划定，等待流民营造",
   road: "道路铺设完成",
+  wall: "城墙修筑完成",
   well: "水井建造完成",
   farm: "农场建造完成",
   granary: "粮仓建造完成",
@@ -96,6 +119,7 @@ const constructionSuccessMessages = {
 const constructionSaveFailureMessages = {
   house: "宅基地已划定，但自动保存失败",
   road: "道路已铺设，但自动保存失败",
+  wall: "城墙已修筑，但自动保存失败",
   well: "水井已建成，但自动保存失败",
   farm: "农场已建成，但自动保存失败",
   granary: "粮仓已建成，但自动保存失败",
@@ -110,7 +134,9 @@ const constructionSaveFailureMessages = {
 } satisfies Record<Exclude<BuildTool, null | "demolish">, string>;
 
 const demolitionSuccessMessages = {
+  vegetation: "植被已清理",
   road: "道路已拆除",
+  wall: "城墙已拆除",
   house: "住宅已拆除",
   well: "水井已拆除",
   farm: "农场已拆除",
@@ -128,6 +154,7 @@ const demolitionSuccessMessages = {
 const toolInstructions = {
   house: "住宅营造：选择一块 2×2 空地",
   road: "道路营造：选择一个 1×1 空地",
+  wall: "城墙营造：逐格延展墙体，可接入城门两端",
   well: "水井营造：选择一个 1×1 空地",
   farm: "农场营造：选择一块 2×2 空地",
   granary: "粮仓营造：选择一块 2×2 空地",
@@ -139,8 +166,299 @@ const toolInstructions = {
   "tax-office": "税务署营造：连接住宅道路后按月征税",
   "music-school": "音乐学校营造：须沿路连接市场演出场所",
   "trading-post": "贸易站营造：通商后沿路收货，每三个月迎接商队",
-  demolish: "拆除：选择道路或建筑占地",
+  demolish: "拆除清理：选择植被、道路、城墙或建筑占地",
 } satisfies Record<Exclude<BuildTool, null>, string>;
+
+type BuildCategory = "basic" | "industry" | "civic";
+
+interface BuildCardDefinition {
+  tool: Exclude<BuildTool, null>;
+  label: string;
+  category: BuildCategory;
+  shortcut: string;
+  footprint: string;
+  image?: string;
+  Icon?: Icon;
+}
+
+const BUILD_CARDS: BuildCardDefinition[] = [
+  {
+    tool: "house",
+    label: "住宅",
+    category: "basic",
+    shortcut: "Q",
+    footprint: "2×2",
+    image: "/assets/runtime/v1/house/complete.png",
+  },
+  {
+    tool: "well",
+    label: "水井",
+    category: "basic",
+    shortcut: "W",
+    footprint: "1×1",
+    image: "/assets/runtime/v1/buildings/well.png",
+  },
+  {
+    tool: "farm",
+    label: "农场",
+    category: "basic",
+    shortcut: "E",
+    footprint: "2×2",
+    image: "/assets/runtime/v1/buildings/farm.png",
+  },
+  {
+    tool: "granary",
+    label: "粮仓",
+    category: "basic",
+    shortcut: "R",
+    footprint: "2×2",
+    image: "/assets/runtime/v1/buildings/granary.png",
+  },
+  {
+    tool: "market",
+    label: "市场",
+    category: "basic",
+    shortcut: "T",
+    footprint: "2×2",
+    image: "/assets/runtime/v1/buildings/market.png",
+  },
+  {
+    tool: "hemp-farm",
+    label: "麻田",
+    category: "industry",
+    shortcut: "Q",
+    footprint: "2×2",
+    image: "/assets/runtime/v3/industry/hemp-farm.png",
+  },
+  {
+    tool: "weaver",
+    label: "织坊",
+    category: "industry",
+    shortcut: "W",
+    footprint: "2×2",
+    image: "/assets/runtime/v3/industry/weaver.png",
+  },
+  {
+    tool: "weaponsmith",
+    label: "兵器坊",
+    category: "industry",
+    shortcut: "E",
+    footprint: "2×2",
+    image: "/assets/runtime/v3/military/weaponsmith.png",
+  },
+  {
+    tool: "trading-post",
+    label: "贸易站",
+    category: "industry",
+    shortcut: "R",
+    footprint: "2×2",
+    image: "/assets/runtime/v3/commerce/trading-post.png",
+  },
+  {
+    tool: "tax-office",
+    label: "税务署",
+    category: "civic",
+    shortcut: "Q",
+    footprint: "2×2",
+    image: "/assets/runtime/v3/government/tax-office.png",
+  },
+  {
+    tool: "music-school",
+    label: "音乐学校",
+    category: "civic",
+    shortcut: "W",
+    footprint: "2×2",
+    image: "/assets/runtime/v3/entertainment/music-school.png",
+  },
+  {
+    tool: "infantry-fort",
+    label: "步兵营",
+    category: "civic",
+    shortcut: "E",
+    footprint: "2×2",
+    image: "/assets/runtime/v3/military/infantry-fort.png",
+  },
+  {
+    tool: "road",
+    label: "道路",
+    category: "civic",
+    shortcut: "Y",
+    footprint: "1×1",
+    Icon: RoadHorizon,
+  },
+  {
+    tool: "wall",
+    label: "城墙",
+    category: "civic",
+    shortcut: "R",
+    footprint: "1×1",
+    Icon: Wall,
+  },
+  {
+    tool: "demolish",
+    label: "拆除",
+    category: "civic",
+    shortcut: "T",
+    footprint: "工具",
+    Icon: Trash,
+  },
+];
+
+const MINIMAP_BUILDING_COLORS: Record<string, string> = {
+  house: "#d8c69c",
+  well: "#72a9b2",
+  farm: "#7f9b55",
+  granary: "#c2a866",
+  market: "#b66e50",
+  "hemp-farm": "#688f59",
+  weaver: "#a88762",
+  weaponsmith: "#aa684d",
+  "infantry-fort": "#b85f4e",
+  "tax-office": "#c3945f",
+  "music-school": "#ad7c71",
+  "trading-post": "#6f9a82",
+};
+
+function CommandMinimap({
+  snapshot,
+  focusTile,
+}: {
+  snapshot: WorldSnapshot | null;
+  focusTile: TileCoordinate;
+}) {
+  const minimapRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = minimapRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+    context.clearRect(0, 0, width, height);
+    context.fillStyle = "#071517";
+    context.fillRect(0, 0, width, height);
+
+    if (!snapshot) return;
+
+    const terrain = snapshot.terrain ?? DEFAULT_TERRAIN_CONTRACT;
+    const mapWidth = terrain.width;
+    const mapHeight = terrain.height;
+    const tileWidth = (width - 24) / ((mapWidth + mapHeight) / 2);
+    const tileHeight = (height - 14) / ((mapWidth + mapHeight) / 2);
+    const originX = width / 2;
+    const originY = 7;
+    const project = (x: number, y: number) => ({
+      x:
+        originX +
+        ((x - terrain.originX - (y - terrain.originY)) * tileWidth) / 2,
+      y:
+        originY +
+        ((x - terrain.originX + (y - terrain.originY)) * tileHeight) / 2,
+    });
+    const pathPlot = (
+      x: number,
+      y: number,
+      cellWidth: number,
+      cellHeight: number,
+    ) => {
+      const corners = [
+        project(x, y),
+        project(x + cellWidth, y),
+        project(x + cellWidth, y + cellHeight),
+        project(x, y + cellHeight),
+      ];
+      context.beginPath();
+      context.moveTo(corners[0].x, corners[0].y);
+      for (const corner of corners.slice(1)) {
+        context.lineTo(corner.x, corner.y);
+      }
+      context.closePath();
+    };
+
+    pathPlot(terrain.originX, terrain.originY, mapWidth, mapHeight);
+    context.fillStyle = "#172823";
+    context.fill();
+    context.strokeStyle = "rgba(184, 154, 85, 0.38)";
+    context.lineWidth = 1.5;
+    context.stroke();
+
+    context.strokeStyle = "rgba(116, 142, 116, 0.16)";
+    context.lineWidth = 1;
+    for (
+      let coordinate = terrain.originX + 4;
+      coordinate < terrain.originX + mapWidth;
+      coordinate += 4
+    ) {
+      const start = project(coordinate, terrain.originY);
+      const end = project(coordinate, terrain.originY + mapHeight);
+      context.beginPath();
+      context.moveTo(start.x, start.y);
+      context.lineTo(end.x, end.y);
+      context.stroke();
+    }
+    for (
+      let coordinate = terrain.originY + 4;
+      coordinate < terrain.originY + mapHeight;
+      coordinate += 4
+    ) {
+      const start = project(terrain.originX, coordinate);
+      const end = project(terrain.originX + mapWidth, coordinate);
+      context.beginPath();
+      context.moveTo(start.x, start.y);
+      context.lineTo(end.x, end.y);
+      context.stroke();
+    }
+
+    context.fillStyle = "#8d7a52";
+    for (const road of snapshot.roads) {
+      pathPlot(road.x, road.y, 1, 1);
+      context.fill();
+    }
+
+    context.fillStyle = "#77756e";
+    for (const wall of snapshot.walls ?? []) {
+      pathPlot(wall.x, wall.y, 1, 1);
+      context.fill();
+      context.strokeStyle = "rgba(30, 29, 27, 0.9)";
+      context.lineWidth = 1;
+      context.stroke();
+    }
+
+    for (const building of snapshot.buildings) {
+      pathPlot(
+        building.x,
+        building.y,
+        building.footprint.width,
+        building.footprint.height,
+      );
+      context.fillStyle = MINIMAP_BUILDING_COLORS[building.typeId] ?? "#a79a79";
+      context.fill();
+      context.strokeStyle = "rgba(4, 12, 13, 0.72)";
+      context.lineWidth = 1;
+      context.stroke();
+    }
+
+    pathPlot(focusTile.x, focusTile.y, 1, 1);
+    context.strokeStyle = "#e1c676";
+    context.lineWidth = 2;
+    context.stroke();
+  }, [focusTile.x, focusTile.y, snapshot]);
+
+  return (
+    <figure className="command-minimap" aria-label="实时城域图">
+      <canvas ref={minimapRef} width={540} height={144} aria-hidden="true" />
+      <figcaption>
+        <span>城域图</span>
+        <small>
+          {snapshot
+            ? `${snapshot.terrain?.width ?? 96}×${snapshot.terrain?.height ?? 96} · 建筑 ${snapshot.buildings.length} · 墙 ${(snapshot.walls ?? []).length}`
+            : "正在绘制"}
+        </small>
+      </figcaption>
+    </figure>
+  );
+}
 
 const capabilityLabels = {
   "food-variety": "五谷轮作",
@@ -251,18 +569,41 @@ export function App() {
   const [marketFoodQuality, setMarketFoodQuality] = useState("无粮");
   const [householdFoodQuality, setHouseholdFoodQuality] = useState("—");
   const [foodSupplyStatus, setFoodSupplyStatus] = useState("供粮 —");
+  const [livelihoodSummary, setLivelihoodSummary] = useState({
+    totalCash: 0,
+    employedHouseholds: 0,
+    hungryHouseholds: 0,
+    dominantBlocker: "尚无住户",
+  });
   const [roadCount, setRoadCount] = useState(0);
+  const [wallCount, setWallCount] = useState(0);
   const [populationCount, setPopulationCount] = useState(0);
+  const [overviewOpen, setOverviewOpen] = useState(false);
+  const [railTab, setRailTab] = useState<"build" | "governance" | "city">(
+    "build",
+  );
+  const [railCollapsed, setRailCollapsed] = useState(false);
   const [populationPanelOpen, setPopulationPanelOpen] = useState(false);
   const populationPanelOpenRef = useRef(false);
-  const [populationPanelData, setPopulationPanelData] = useState<WorldSnapshot | null>(null);
+  const [populationPanelData, setPopulationPanelData] =
+    useState<WorldSnapshot | null>(null);
   const [housePanelOpen, setHousePanelOpen] = useState(false);
   const housePanelOpenRef = useRef(false);
-  const [housePanelData, setHousePanelData] = useState<WorldSnapshot | null>(null);
-  const [housePanelFocusId, setHousePanelFocusId] = useState<number | null>(null);
+  const [housePanelData, setHousePanelData] = useState<WorldSnapshot | null>(
+    null,
+  );
+  const [housePanelFocusId, setHousePanelFocusId] = useState<number | null>(
+    null,
+  );
   const [buildingPanelOpen, setBuildingPanelOpen] = useState(false);
   const buildingPanelOpenRef = useRef(false);
-  const [buildingPanelData, setBuildingPanelData] = useState<{ snapshot: WorldSnapshot; buildingId: number } | null>(null);
+  const [buildingPanelData, setBuildingPanelData] = useState<{
+    snapshot: WorldSnapshot;
+    buildingId: number;
+  } | null>(null);
+  const [minimapSnapshot, setMinimapSnapshot] = useState<WorldSnapshot | null>(
+    null,
+  );
   const [simulationTick, setSimulationTick] = useState(0);
   const [simulationSpeed, setSimulationSpeed] = useState<0 | 1 | 2 | 4>(1);
   const [eraName, setEraName] = useState("聚落奠基");
@@ -301,13 +642,16 @@ export function App() {
     let renderer: CityRenderer | undefined;
     let cancelled = false;
     let tickTimer: number | undefined;
+    let activityTimer: number | undefined;
     let tickPending = false;
+    let activityPending = false;
     const saveStore = new GameSaveStore();
     const saveQueue = new RevisionSaveQueue(saveStore);
     const workerClient = new SimulationWorkerClient();
 
     const applySnapshot = (snapshot: WorldSnapshot) => {
       snapshotRef.current = snapshot;
+      setMinimapSnapshot(snapshot);
       rendererRef.current?.syncWorld(snapshot);
       setBuildingCount(
         snapshot.buildings.filter((building) => building.typeId === "house")
@@ -560,7 +904,9 @@ export function App() {
             ? `缺粮 ${hungryHouseholds} 户`
             : `供粮 ${snapshot.households.length}/${snapshot.households.length}`,
       );
+      setLivelihoodSummary(summarizeCityLivelihood(snapshot));
       setRoadCount(snapshot.roads.length);
+      setWallCount((snapshot.walls ?? []).length);
       setPopulationCount(
         snapshot.households.reduce(
           (total, household) => total + household.residents,
@@ -663,7 +1009,13 @@ export function App() {
       } else {
         setSiteDesirability("宜居 —");
       }
-      if (tool && tool !== "road" && tool !== "demolish" && tile) {
+      if (
+        tool &&
+        tool !== "road" &&
+        tool !== "wall" &&
+        tool !== "demolish" &&
+        tile
+      ) {
         const assessment = fengShuiAtSite(tool, tile.x, tile.y);
         setSiteFengShui(
           `风水 ${fengShuiStatusLabels[assessment.status]} · ${assessment.reason}`,
@@ -683,6 +1035,9 @@ export function App() {
           break;
         case "road":
           status = evaluateRoadPlacement(snapshot, tile.x, tile.y);
+          break;
+        case "wall":
+          status = evaluateWallPlacement(snapshot, tile.x, tile.y);
           break;
         case "well":
           status = evaluateWellPlacement(snapshot, tile.x, tile.y);
@@ -745,7 +1100,14 @@ export function App() {
               (road) => road.x === tile.x && road.y === tile.y,
             )
             ? "road"
-            : (demolitionBuilding?.typeId ?? null)
+            : (currentSnapshot.walls ?? []).some(
+                  (wall) => wall.x === tile.x && wall.y === tile.y,
+                )
+              ? "wall"
+              : (demolitionBuilding?.typeId ??
+                (hasVegetationObstacle(currentSnapshot, tile.x, tile.y)
+                  ? "vegetation"
+                  : null))
           : null;
       const seq = ++sequenceRef.current;
       const farmCrop = selectedCropRef.current;
@@ -777,6 +1139,13 @@ export function App() {
           command = {
             seq,
             type: "build-road-path",
+            tiles: [{ x: tile.x, y: tile.y }],
+          };
+          break;
+        case "wall":
+          command = {
+            seq,
+            type: "build-wall-path",
             tiles: [{ x: tile.x, y: tile.y }],
           };
           break;
@@ -823,10 +1192,10 @@ export function App() {
       }
     };
 
-    const advanceOneTick = async () => {
-      if (tickPending || cancelled || !snapshotRef.current) return;
-      const ticks = simulationSpeedRef.current;
-      if (ticks === 0) return;
+    const advanceTime = async (ticks: number) => {
+      if (tickPending || cancelled || !snapshotRef.current || ticks === 0) {
+        return;
+      }
       tickPending = true;
       const previousRevision = snapshotRef.current.revision;
       try {
@@ -855,6 +1224,51 @@ export function App() {
       } finally {
         tickPending = false;
       }
+    };
+
+    const advancePersonActivity = async () => {
+      if (
+        activityPending ||
+        cancelled ||
+        !snapshotRef.current ||
+        simulationSpeedRef.current === 0
+      ) {
+        return;
+      }
+      activityPending = true;
+      try {
+        const response = await workerClient.command({
+          seq: ++sequenceRef.current,
+          type: "advance-activity",
+          pulses: 1,
+        });
+        if (cancelled) return;
+        applySnapshot(response.snapshot);
+      } catch (error) {
+        if (!cancelled) {
+          setFeedback(
+            error instanceof Error ? error.message : "人物活动推进失败",
+          );
+        }
+      } finally {
+        activityPending = false;
+      }
+    };
+
+    let clockProgress = 0;
+    let queuedTicks = 0;
+    const scheduleTimeAdvance = () => {
+      if (cancelled || !snapshotRef.current) return;
+      const scheduled = advanceClockProgress(
+        clockProgress,
+        simulationSpeedRef.current,
+      );
+      clockProgress = scheduled.progress;
+      queuedTicks += scheduled.ticks;
+      if (queuedTicks === 0 || tickPending) return;
+      const ticks = queuedTicks;
+      queuedTicks = 0;
+      void advanceTime(ticks);
     };
 
     const applyLaborPolicy = async (policy: LaborPolicyView) => {
@@ -1053,6 +1467,7 @@ export function App() {
         }
         rendererRef.current = renderer;
         renderer.setBuildTool(buildToolRef.current);
+        renderer.setAnimationPaused(simulationSpeedRef.current === 0);
         const ready = await workerClient.initialize(restoredSnapshot);
         if (cancelled) return;
         applySnapshot(ready.snapshot);
@@ -1063,9 +1478,14 @@ export function App() {
         } else if (loadResult.status === "loaded") {
           setFeedback("已恢复上次营造进度");
         }
-        tickTimer = window.setInterval(() => void advanceOneTick(), 1_000);
+        tickTimer = window.setInterval(scheduleTimeAdvance, CLOCK_HEARTBEAT_MS);
+        activityTimer = window.setInterval(
+          () => void advancePersonActivity(),
+          PERSON_ACTIVITY_PULSE_MS,
+        );
       } catch (error: unknown) {
         if (cancelled) return;
+        console.error("[startup] 游戏启动失败", error);
         setGameStatus("无法启动游戏");
         setErrorMessage(
           error instanceof Error ? error.message : "未知启动错误",
@@ -1077,6 +1497,7 @@ export function App() {
     return () => {
       cancelled = true;
       if (tickTimer !== undefined) window.clearInterval(tickTimer);
+      if (activityTimer !== undefined) window.clearInterval(activityTimer);
       rendererRef.current = null;
       snapshotRef.current = null;
       refreshPreviewRef.current = null;
@@ -1218,6 +1639,7 @@ export function App() {
   const updateSimulationSpeed = (speed: 0 | 1 | 2 | 4) => {
     simulationSpeedRef.current = speed;
     setSimulationSpeed(speed);
+    rendererRef.current?.setAnimationPaused(speed === 0);
     setFeedback(speed === 0 ? "模拟已暂停" : `模拟速度已设为 ${speed}×`);
   };
 
@@ -1226,6 +1648,21 @@ export function App() {
   const handleCanvasKeyDown = (
     event: ReactKeyboardEvent<HTMLCanvasElement>,
   ) => {
+    if (!event.metaKey && !event.ctrlKey && !event.altKey) {
+      const shortcutCard = BUILD_CARDS.find(
+        (card) =>
+          card.shortcut.toLowerCase() === event.key.toLowerCase(),
+      );
+      if (shortcutCard) {
+        event.preventDefault();
+        event.stopPropagation();
+        setRailTab("build");
+        setOverviewOpen(false);
+        toggleBuildTool(shortcutCard.tool);
+        return;
+      }
+    }
+
     const directions: Partial<Record<string, TileCoordinate>> = {
       ArrowLeft: { x: -1, y: 0 },
       ArrowRight: { x: 1, y: 0 },
@@ -1237,8 +1674,22 @@ export function App() {
       event.preventDefault();
       event.stopPropagation();
       const nextTile = {
-        x: Math.min(31, Math.max(0, keyboardTileRef.current.x + direction.x)),
-        y: Math.min(31, Math.max(0, keyboardTileRef.current.y + direction.y)),
+        x: Math.min(
+          DEFAULT_TERRAIN_CONTRACT.originX + DEFAULT_TERRAIN_CONTRACT.width - 1,
+          Math.max(
+            DEFAULT_TERRAIN_CONTRACT.originX,
+            keyboardTileRef.current.x + direction.x,
+          ),
+        ),
+        y: Math.min(
+          DEFAULT_TERRAIN_CONTRACT.originY +
+            DEFAULT_TERRAIN_CONTRACT.height -
+            1,
+          Math.max(
+            DEFAULT_TERRAIN_CONTRACT.originY,
+            keyboardTileRef.current.y + direction.y,
+          ),
+        ),
       };
       keyboardTileRef.current = nextTile;
       setKeyboardTile(nextTile);
@@ -1252,13 +1703,20 @@ export function App() {
     }
   };
 
+  const activateRailTab = (tab: "build" | "governance" | "city") => {
+    setRailTab(tab);
+    setOverviewOpen(tab === "city");
+  };
+
   return (
-    <main className="game-shell">
+    <main
+      className={`game-shell rail-tab-${railTab}${railCollapsed ? " rail-collapsed" : ""}`}
+    >
       <canvas
         ref={canvasRef}
         className="game-canvas"
         data-testid="game-canvas"
-        aria-label="32×32 城市沙盘"
+        aria-label="96×96 城市与郊野沙盘"
         aria-describedby="canvas-help"
         tabIndex={0}
         onFocus={() => refreshPreviewRef.current?.(keyboardTileRef.current)}
@@ -1277,163 +1735,19 @@ export function App() {
       </span>
 
       <header className="top-bar">
-        <div>
-          <p className="eyebrow">古城营造司 · 民生簿</p>
+        <div className="city-identity">
+          <p className="eyebrow">河洛城司 · 城图</p>
           <h1>河洛原</h1>
+          <p className="city-calendar">{calendarLabel(simulationTick)}</p>
         </div>
-        <dl className="hud" aria-label="运行状态">
-          <div>
-            <dt>状态</dt>
-            <dd data-testid="game-status">{gameStatus}</dd>
-          </div>
-          <div>
-            <dt>渲染</dt>
-            <dd data-testid="renderer-name">{rendererName}</dd>
-          </div>
+        <dl className="top-resources" aria-label="城市核心资源">
           <div
-            className={`stat-clickable${housePanelOpen ? " active" : ""}`}
-            onClick={() => toggleHousePanel()}
+            className={`top-resource-link${populationPanelOpen ? " active" : ""}`}
             role="button"
             tabIndex={0}
-            aria-expanded={housePanelOpen}
-            aria-label="查看住宅列表"
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                toggleHousePanel();
-              }
-            }}
-          >
-            <dt>住宅</dt>
-            <dd data-testid="building-count">{buildingCount}</dd>
-          </div>
-          <div>
-            <dt>流民</dt>
-            <dd data-testid="migrant-count">{migrantCount}</dd>
-          </div>
-          <div>
-            <dt>人流</dt>
-            <dd data-testid="citizen-activity">{citizenActivity}</dd>
-          </div>
-          <div>
-            <dt>水井</dt>
-            <dd data-testid="well-count">{wellCount}</dd>
-          </div>
-          <div>
-            <dt>农场</dt>
-            <dd data-testid="farm-count">{farmCount}</dd>
-          </div>
-          <div>
-            <dt>种植</dt>
-            <dd data-testid="farm-crop-summary">{farmCropSummary}</dd>
-          </div>
-          <div>
-            <dt>粮仓</dt>
-            <dd data-testid="granary-count">{granaryCount}</dd>
-          </div>
-          <div>
-            <dt>市场</dt>
-            <dd data-testid="market-count">{marketCount}</dd>
-          </div>
-          <div>
-            <dt>仓粮</dt>
-            <dd data-testid="granary-food-count">{granaryFoodCount}</dd>
-          </div>
-          <div>
-            <dt>市粮</dt>
-            <dd data-testid="market-food-count">{marketFoodCount}</dd>
-          </div>
-          <div>
-            <dt>市供</dt>
-            <dd data-testid="market-food-quality">{marketFoodQuality}</dd>
-          </div>
-          <div>
-            <dt>麻田</dt>
-            <dd data-testid="hemp-farm-count">{hempFarmCount}</dd>
-          </div>
-          <div>
-            <dt>织坊</dt>
-            <dd data-testid="weaver-count">{weaverCount}</dd>
-          </div>
-          <div>
-            <dt>市衣</dt>
-            <dd data-testid="clothing-count">{clothingCount}</dd>
-          </div>
-          <div>
-            <dt>衣户</dt>
-            <dd data-testid="clothing-service">{clothingService}</dd>
-          </div>
-          <div>
-            <dt>兵坊</dt>
-            <dd data-testid="weaponsmith-count">{weaponsmithCount}</dd>
-          </div>
-          <div>
-            <dt>步营</dt>
-            <dd data-testid="fort-count">{fortCount}</dd>
-          </div>
-          <div>
-            <dt>兵力</dt>
-            <dd data-testid="soldier-count">{soldierCount}</dd>
-          </div>
-          <div>
-            <dt>守军</dt>
-            <dd data-testid="deployed-count">{deployedCount}</dd>
-          </div>
-          <div>
-            <dt>税署</dt>
-            <dd data-testid="tax-office-count">{taxOfficeCount}</dd>
-          </div>
-          <div>
-            <dt>国库</dt>
-            <dd data-testid="treasury">{treasury}</dd>
-          </div>
-          <div>
-            <dt>月税</dt>
-            <dd data-testid="tax-revenue">+{taxRevenue}</dd>
-          </div>
-          <div>
-            <dt>民心</dt>
-            <dd data-testid="city-sentiment">{citySentiment}</dd>
-          </div>
-          <div>
-            <dt>乐学</dt>
-            <dd data-testid="music-school-count">{musicSchoolCount}</dd>
-          </div>
-          <div>
-            <dt>乐师</dt>
-            <dd data-testid="performer-count">{performerCount}</dd>
-          </div>
-          <div>
-            <dt>乐户</dt>
-            <dd data-testid="entertainment-service">{entertainmentService}</dd>
-          </div>
-          <div>
-            <dt>商站</dt>
-            <dd data-testid="trading-post-count">{tradingPostCount}</dd>
-          </div>
-          <div>
-            <dt>待贸</dt>
-            <dd data-testid="trade-stock">{tradeStock}</dd>
-          </div>
-          <div>
-            <dt>贸入</dt>
-            <dd data-testid="trade-revenue">+{tradeRevenue}</dd>
-          </div>
-          <div>
-            <dt>住膳</dt>
-            <dd data-testid="household-food-quality">{householdFoodQuality}</dd>
-          </div>
-          <div>
-            <dt>道路</dt>
-            <dd data-testid="road-count">{roadCount}</dd>
-          </div>
-          <div
-            className={`stat-clickable${populationPanelOpen ? " active" : ""}`}
-            onClick={togglePopulationPanel}
-            role="button"
-            tabIndex={0}
-            aria-expanded={populationPanelOpen}
             aria-label="查看人口详情"
+            aria-expanded={populationPanelOpen}
+            onClick={togglePopulationPanel}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
@@ -1441,263 +1755,433 @@ export function App() {
               }
             }}
           >
+            <UsersThree size={14} weight="duotone" aria-hidden="true" />
             <dt>人口</dt>
-            <dd data-testid="population-count">{populationCount}</dd>
+            <dd>{populationCount}</dd>
           </div>
           <div>
+            <Plant size={14} weight="duotone" aria-hidden="true" />
+            <dt>粮食</dt>
+            <dd>{granaryFoodCount + marketFoodCount}</dd>
+          </div>
+          <div>
+            <Coins size={14} weight="duotone" aria-hidden="true" />
+            <dt>钱粮</dt>
+            <dd>{treasury}</dd>
+          </div>
+          <div>
+            <Hammer size={14} weight="duotone" aria-hidden="true" />
             <dt>劳力</dt>
-            <dd data-testid="labor-assignment">
+            <dd>
               {laborAssigned}/{laborDemand}
             </dd>
           </div>
           <div>
-            <dt>缺工</dt>
-            <dd data-testid="labor-vacancies">{laborVacancies}</dd>
-          </div>
-          <div>
-            <dt>薪耗</dt>
-            <dd data-testid="labor-payroll">{laborPayroll}</dd>
-          </div>
-          <div>
-            <dt>模拟</dt>
-            <dd data-testid="simulation-tick">tick {simulationTick}</dd>
-          </div>
-          <div>
-            <dt>历法</dt>
-            <dd data-testid="calendar-state">
-              {calendarLabel(simulationTick)}
-            </dd>
-          </div>
-          <div>
-            <dt>时代</dt>
-            <dd data-testid="era-state">{eraName}</dd>
-          </div>
-          <div>
-            <dt>下启</dt>
-            <dd data-testid="next-technology">{nextTechnology}</dd>
+            <Smiley size={14} weight="duotone" aria-hidden="true" />
+            <dt>民心</dt>
+            <dd>{citySentiment}</dd>
           </div>
         </dl>
+        <button
+          type="button"
+          className="overview-toggle"
+          aria-expanded={overviewOpen}
+          aria-controls="city-overview"
+          onClick={() => setOverviewOpen((open) => !open)}
+        >
+          <span>城市总览</span>
+          <small>{overviewOpen ? "收起" : "展开"}</small>
+        </button>
       </header>
+      <dl
+        id="city-overview"
+        className={`hud${overviewOpen ? " expanded" : ""}`}
+        aria-label="运行状态"
+      >
+        <div className="hud-primary">
+          <dt>状态</dt>
+          <dd data-testid="game-status">{gameStatus}</dd>
+        </div>
+        <div className="hud-primary">
+          <dt>渲染</dt>
+          <dd data-testid="renderer-name">{rendererName}</dd>
+        </div>
+        <div
+          className={`hud-primary stat-clickable${housePanelOpen ? " active" : ""}`}
+          onClick={() => toggleHousePanel()}
+          role="button"
+          tabIndex={0}
+          aria-expanded={housePanelOpen}
+          aria-label="查看房屋列表"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              toggleHousePanel();
+            }
+          }}
+        >
+          <dt>住宅</dt>
+          <dd data-testid="building-count">{buildingCount}</dd>
+        </div>
+        <div>
+          <dt>流民</dt>
+          <dd data-testid="migrant-count">{migrantCount}</dd>
+        </div>
+        <div>
+          <dt>人流</dt>
+          <dd data-testid="citizen-activity">{citizenActivity}</dd>
+        </div>
+        <div className="hud-primary">
+          <dt>水井</dt>
+          <dd data-testid="well-count">{wellCount}</dd>
+        </div>
+        <div className="hud-primary">
+          <dt>农场</dt>
+          <dd data-testid="farm-count">{farmCount}</dd>
+        </div>
+        <div>
+          <dt>种植</dt>
+          <dd data-testid="farm-crop-summary">{farmCropSummary}</dd>
+        </div>
+        <div className="hud-primary">
+          <dt>粮仓</dt>
+          <dd data-testid="granary-count">{granaryCount}</dd>
+        </div>
+        <div className="hud-primary">
+          <dt>市场</dt>
+          <dd data-testid="market-count">{marketCount}</dd>
+        </div>
+        <div className="hud-primary">
+          <dt>仓粮</dt>
+          <dd data-testid="granary-food-count">{granaryFoodCount}</dd>
+        </div>
+        <div className="hud-primary">
+          <dt>市粮</dt>
+          <dd data-testid="market-food-count">{marketFoodCount}</dd>
+        </div>
+        <div>
+          <dt>市供</dt>
+          <dd data-testid="market-food-quality">{marketFoodQuality}</dd>
+        </div>
+        <div>
+          <dt>麻田</dt>
+          <dd data-testid="hemp-farm-count">{hempFarmCount}</dd>
+        </div>
+        <div>
+          <dt>织坊</dt>
+          <dd data-testid="weaver-count">{weaverCount}</dd>
+        </div>
+        <div>
+          <dt>市衣</dt>
+          <dd data-testid="clothing-count">{clothingCount}</dd>
+        </div>
+        <div>
+          <dt>衣户</dt>
+          <dd data-testid="clothing-service">{clothingService}</dd>
+        </div>
+        <div>
+          <dt>兵坊</dt>
+          <dd data-testid="weaponsmith-count">{weaponsmithCount}</dd>
+        </div>
+        <div>
+          <dt>步营</dt>
+          <dd data-testid="fort-count">{fortCount}</dd>
+        </div>
+        <div>
+          <dt>兵力</dt>
+          <dd data-testid="soldier-count">{soldierCount}</dd>
+        </div>
+        <div>
+          <dt>守军</dt>
+          <dd data-testid="deployed-count">{deployedCount}</dd>
+        </div>
+        <div>
+          <dt>税署</dt>
+          <dd data-testid="tax-office-count">{taxOfficeCount}</dd>
+        </div>
+        <div>
+          <dt>国库</dt>
+          <dd data-testid="treasury">{treasury}</dd>
+        </div>
+        <div>
+          <dt>月税</dt>
+          <dd data-testid="tax-revenue">+{taxRevenue}</dd>
+        </div>
+        <div>
+          <dt>民心</dt>
+          <dd data-testid="city-sentiment">{citySentiment}</dd>
+        </div>
+        <div>
+          <dt>乐学</dt>
+          <dd data-testid="music-school-count">{musicSchoolCount}</dd>
+        </div>
+        <div>
+          <dt>乐师</dt>
+          <dd data-testid="performer-count">{performerCount}</dd>
+        </div>
+        <div>
+          <dt>乐户</dt>
+          <dd data-testid="entertainment-service">{entertainmentService}</dd>
+        </div>
+        <div>
+          <dt>商站</dt>
+          <dd data-testid="trading-post-count">{tradingPostCount}</dd>
+        </div>
+        <div>
+          <dt>待贸</dt>
+          <dd data-testid="trade-stock">{tradeStock}</dd>
+        </div>
+        <div>
+          <dt>贸入</dt>
+          <dd data-testid="trade-revenue">+{tradeRevenue}</dd>
+        </div>
+        <div>
+          <dt>住膳</dt>
+          <dd data-testid="household-food-quality">{householdFoodQuality}</dd>
+        </div>
+        <div
+          className={`hud-action stat-clickable${populationPanelOpen ? " active" : ""}`}
+          onClick={togglePopulationPanel}
+          role="button"
+          tabIndex={0}
+          aria-label="查看家庭生计"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              togglePopulationPanel();
+            }
+          }}
+        >
+          <dt>家计</dt>
+          <dd data-testid="livelihood-summary">
+            钱{livelihoodSummary.totalCash} · 工
+            {livelihoodSummary.employedHouseholds}
+          </dd>
+        </div>
+        <div>
+          <dt>生阻</dt>
+          <dd data-testid="livelihood-blocker">
+            断{livelihoodSummary.hungryHouseholds} ·
+            {livelihoodSummary.dominantBlocker}
+          </dd>
+        </div>
+        <div className="hud-primary">
+          <dt>道路</dt>
+          <dd data-testid="road-count">{roadCount}</dd>
+        </div>
+        <div className="hud-primary">
+          <dt>城墙</dt>
+          <dd data-testid="wall-count">{wallCount}</dd>
+        </div>
+        <div
+          className={`hud-primary stat-clickable${populationPanelOpen ? " active" : ""}`}
+          onClick={togglePopulationPanel}
+          role="button"
+          tabIndex={0}
+          aria-expanded={populationPanelOpen}
+          aria-label="查看人口详情"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              togglePopulationPanel();
+            }
+          }}
+        >
+          <dt>人口</dt>
+          <dd data-testid="population-count">{populationCount}</dd>
+        </div>
+        <div>
+          <dt>劳力</dt>
+          <dd data-testid="labor-assignment">
+            {laborAssigned}/{laborDemand}
+          </dd>
+        </div>
+        <div>
+          <dt>缺工</dt>
+          <dd data-testid="labor-vacancies">{laborVacancies}</dd>
+        </div>
+        <div>
+          <dt>薪耗</dt>
+          <dd data-testid="labor-payroll">{laborPayroll}</dd>
+        </div>
+        <div className="hud-primary">
+          <dt>模拟</dt>
+          <dd data-testid="simulation-tick">tick {simulationTick}</dd>
+        </div>
+        <div>
+          <dt>历法</dt>
+          <dd data-testid="calendar-state">{calendarLabel(simulationTick)}</dd>
+        </div>
+        <div>
+          <dt>时代</dt>
+          <dd data-testid="era-state">{eraName}</dd>
+        </div>
+        <div>
+          <dt>下启</dt>
+          <dd data-testid="next-technology">{nextTechnology}</dd>
+        </div>
+      </dl>
 
       {populationPanelOpen && populationPanelData && (
-        <PopulationDetailPanel
-          snapshot={populationPanelData}
-          onClose={togglePopulationPanel}
-        />
+        <div className="modal-layer" role="presentation">
+          <PopulationDetailPanel
+            snapshot={populationPanelData}
+            onClose={togglePopulationPanel}
+          />
+        </div>
       )}
 
       {housePanelOpen && housePanelData && (
-        <HouseListPanel
-          snapshot={housePanelData}
-          onClose={() => toggleHousePanel()}
-          focusHouseId={housePanelFocusId}
-        />
+        <div className="modal-layer" role="presentation">
+          <HouseListPanel
+            snapshot={housePanelData}
+            onClose={() => toggleHousePanel()}
+            focusHouseId={housePanelFocusId}
+          />
+        </div>
       )}
 
-      {buildingPanelOpen && buildingPanelData && (() => {
-        const building = buildingPanelData.snapshot.buildings.find(
-          (b) => b.id === buildingPanelData.buildingId,
-        );
-        if (!building) return null;
-        return (
-          <BuildingDetailPanel
-            building={building}
-            snapshot={buildingPanelData.snapshot}
-            onClose={closeBuildingPanel}
-          />
-        );
-      })()}
+      {buildingPanelOpen &&
+        buildingPanelData &&
+        (() => {
+          const building = buildingPanelData.snapshot.buildings.find(
+            (b) => b.id === buildingPanelData.buildingId,
+          );
+          if (!building) return null;
+          return (
+            <div className="modal-layer" role="presentation">
+              <BuildingDetailPanel
+                building={building}
+                snapshot={buildingPanelData.snapshot}
+                onClose={closeBuildingPanel}
+              />
+            </div>
+          );
+        })()}
 
-      <aside className="build-dock" aria-label="建造工具">
-        <span className="dock-label">民生</span>
-        <button
-          type="button"
-          className={buildTool === "house" ? "active" : undefined}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "house"}
-          onClick={() => toggleBuildTool("house")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            舍
-          </span>
-          住宅
-        </button>
-        <button
-          type="button"
-          className={buildTool === "road" ? "active" : undefined}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "road"}
-          onClick={() => toggleBuildTool("road")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            路
-          </span>
-          道路
-        </button>
-        <button
-          type="button"
-          className={`well-tool${buildTool === "well" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "well"}
-          onClick={() => toggleBuildTool("well")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            井
-          </span>
-          水井
-        </button>
-        <button
-          type="button"
-          className={`market-tool${buildTool === "market" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "market"}
-          onClick={() => toggleBuildTool("market")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            市
-          </span>
-          市场
-        </button>
-        <button
-          type="button"
-          className={`farm-tool${buildTool === "farm" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "farm"}
-          onClick={() => toggleBuildTool("farm")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            田
-          </span>
-          农场
-        </button>
-        <button
-          type="button"
-          className={`granary-tool${buildTool === "granary" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "granary"}
-          onClick={() => toggleBuildTool("granary")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            仓
-          </span>
-          粮仓
-        </button>
-        <button
-          type="button"
-          className={`hemp-tool${buildTool === "hemp-farm" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "hemp-farm"}
-          onClick={() => toggleBuildTool("hemp-farm")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            麻
-          </span>
-          麻田
-        </button>
-        <button
-          type="button"
-          className={`weaver-tool${buildTool === "weaver" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "weaver"}
-          onClick={() => toggleBuildTool("weaver")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            织
-          </span>
-          织坊
-        </button>
-        <button
-          type="button"
-          className={`weaponsmith-tool${buildTool === "weaponsmith" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "weaponsmith"}
-          onClick={() => toggleBuildTool("weaponsmith")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            兵
-          </span>
-          兵器坊
-        </button>
-        <button
-          type="button"
-          className={`fort-tool${buildTool === "infantry-fort" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "infantry-fort"}
-          onClick={() => toggleBuildTool("infantry-fort")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            戍
-          </span>
-          步兵营
-        </button>
-        <button
-          type="button"
-          className={`tax-tool${buildTool === "tax-office" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "tax-office"}
-          onClick={() => toggleBuildTool("tax-office")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            税
-          </span>
-          税务署
-        </button>
-        <button
-          type="button"
-          className={`music-tool${buildTool === "music-school" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "music-school"}
-          onClick={() => toggleBuildTool("music-school")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            乐
-          </span>
-          音乐学校
-        </button>
-        <button
-          type="button"
-          className={`trade-tool${buildTool === "trading-post" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "trading-post"}
-          onClick={() => toggleBuildTool("trading-post")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            商
-          </span>
-          贸易站
-        </button>
-        <button
-          type="button"
-          className={`demolish-tool${buildTool === "demolish" ? " active" : ""}`}
-          disabled={gameStatus !== "游戏已就绪"}
-          aria-pressed={buildTool === "demolish"}
-          onClick={() => toggleBuildTool("demolish")}
-        >
-          <span className="building-glyph" aria-hidden="true">
-            拆
-          </span>
-          拆除
-        </button>
+      <button
+        type="button"
+        className="command-rail-toggle"
+        aria-controls="command-rail"
+        aria-expanded={!railCollapsed}
+        aria-label={railCollapsed ? "展开右侧指挥栏" : "收起右侧指挥栏"}
+        title={railCollapsed ? "展开指挥栏" : "收起指挥栏"}
+        onClick={() => setRailCollapsed((collapsed) => !collapsed)}
+      >
+        {railCollapsed ? (
+          <CaretLeft size={13} weight="bold" aria-hidden="true" />
+        ) : (
+          <CaretRight size={13} weight="bold" aria-hidden="true" />
+        )}
+      </button>
+
+      <aside
+        id="command-rail"
+        className="build-dock"
+        aria-label="建造工具"
+      >
+        <div className="command-rail-heading">
+          <div>
+            <span>河洛城司</span>
+            <strong>营造指挥</strong>
+          </div>
+          <small
+            className={
+              livelihoodSummary.hungryHouseholds > 0 ? "warning" : undefined
+            }
+          >
+            {livelihoodSummary.hungryHouseholds > 0
+              ? `缺粮 ${livelihoodSummary.hungryHouseholds} 户`
+              : "城情稳定"}
+          </small>
+        </div>
+        <CommandMinimap
+          snapshot={minimapSnapshot}
+          focusTile={hoveredTile ?? keyboardTile}
+        />
+        <nav className="command-rail-tabs" aria-label="指挥栏分区">
+          <button
+            type="button"
+            className={railTab === "build" ? "active" : undefined}
+            aria-pressed={railTab === "build"}
+            onClick={() => activateRailTab("build")}
+          >
+            建造
+          </button>
+          <button
+            type="button"
+            className={railTab === "governance" ? "active" : undefined}
+            aria-pressed={railTab === "governance"}
+            onClick={() => activateRailTab("governance")}
+          >
+            政令
+          </button>
+          <button
+            type="button"
+            className={railTab === "city" ? "active" : undefined}
+            aria-pressed={railTab === "city"}
+            onClick={() => activateRailTab("city")}
+          >
+            城情
+          </button>
+        </nav>
+        {BUILD_CARDS.map((card) => {
+          const UtilityIcon = card.Icon;
+          return (
+            <Fragment key={card.tool}>
+              <button
+                type="button"
+                data-build-group={card.category}
+                data-tool-kind={card.image ? "building" : "utility"}
+                className={`build-card${buildTool === card.tool ? " active" : ""}`}
+                disabled={gameStatus !== "游戏已就绪"}
+                aria-pressed={buildTool === card.tool}
+                onClick={() => toggleBuildTool(card.tool)}
+              >
+                <span className="build-card-visual" aria-hidden="true">
+                  {card.image ? (
+                    <img src={card.image} alt="" draggable="false" />
+                  ) : UtilityIcon ? (
+                    <UtilityIcon size={22} weight="duotone" />
+                  ) : null}
+                </span>
+                <span className="build-card-title">{card.label}</span>
+                {card.image ? (
+                  <span
+                    className="build-card-availability"
+                    aria-hidden="true"
+                  />
+                ) : null}
+                <span className="build-card-meta">
+                  <small>{card.footprint}</small>
+                  <kbd>{card.shortcut}</kbd>
+                </span>
+              </button>
+              {card.tool === "granary" &&
+              buildTool === "farm" ? (
+                <section className="crop-picker" aria-label="选择农作物">
+                  <span className="crop-picker-title">农场作物</span>
+                  {CROP_OPTIONS.map((option) => (
+                    <button
+                      key={option.type}
+                      type="button"
+                      className={
+                        selectedCrop === option.type ? "active" : undefined
+                      }
+                      aria-pressed={selectedCrop === option.type}
+                      data-testid={`crop-${option.type}`}
+                      onClick={() => selectCrop(option.type)}
+                    >
+                      <span>{option.label}</span>
+                      <small>{option.harvestMonth}月</small>
+                    </button>
+                  ))}
+                </section>
+              ) : null}
+            </Fragment>
+          );
+        })}
       </aside>
-
-      {buildTool === "farm" ? (
-        <section className="crop-picker" aria-label="选择农作物">
-          <span className="crop-picker-title">本季播种</span>
-          {CROP_OPTIONS.map((option) => (
-            <button
-              key={option.type}
-              type="button"
-              className={selectedCrop === option.type ? "active" : undefined}
-              aria-pressed={selectedCrop === option.type}
-              data-testid={`crop-${option.type}`}
-              onClick={() => selectCrop(option.type)}
-            >
-              <span>{option.label}</span>
-              <small>{option.harvestMonth} 月收</small>
-            </button>
-          ))}
-        </section>
-      ) : null}
 
       <section className="speed-panel" aria-label="模拟速度">
         {([0, 1, 2, 4] as const).map((speed) => (
@@ -1714,138 +2198,141 @@ export function App() {
         ))}
       </section>
 
-      <section className="labor-panel" aria-label="劳动力政策">
-        <span>工资</span>
-        {(["low", "standard", "high"] as const).map((wageLevel) => (
-          <button
-            key={wageLevel}
-            type="button"
-            className={
-              laborPolicy.wageLevel === wageLevel ? "active" : undefined
-            }
-            disabled={gameStatus !== "游戏已就绪"}
-            data-testid={`wage-${wageLevel}`}
-            aria-pressed={laborPolicy.wageLevel === wageLevel}
-            onClick={() => updateWage(wageLevel)}
-          >
-            {wageLevel === "low"
-              ? "节俭"
-              : wageLevel === "standard"
-                ? "常例"
-                : "优厚"}
-          </button>
-        ))}
-        <span>优先</span>
-        {(
-          [
-            ["agriculture", "农"],
-            ["commerce", "商"],
-            ["services", "役"],
-          ] as const
-        ).map(([sector, label]) => (
-          <button
-            key={sector}
-            type="button"
-            className={
-              laborPolicy.priorities[0] === sector ? "active" : undefined
-            }
-            disabled={gameStatus !== "游戏已就绪"}
-            data-testid={`priority-${sector}`}
-            aria-pressed={laborPolicy.priorities[0] === sector}
-            onClick={() => prioritizeSector(sector)}
-          >
-            {label} {laborSectors[sector]}
-          </button>
-        ))}
-      </section>
-
-      <section className="tax-panel" aria-label="政府税收">
-        <span data-testid="tax-summary">
-          国库 {treasury} · 征 {taxableHouses} 户 · 月税 +{taxRevenue} · 薪 -
-          {laborPayroll} · 贸易 +{tradeRevenue}
-        </span>
-        <span data-testid="sentiment-reasons">
-          民心 {citySentiment} · {sentimentReasons}
-        </span>
-        <span data-testid="migration-attractiveness">
-          迁引 {migrationAppeal}
-        </span>
-        <span data-testid="migration-diagnostic">{migrationDiagnostic}</span>
-        {(["low", "standard", "high"] as const).map((rate) => (
-          <button
-            key={rate}
-            type="button"
-            className={taxRate === rate ? "active" : undefined}
-            disabled={gameStatus !== "游戏已就绪"}
-            data-testid={`tax-rate-${rate}`}
-            aria-pressed={taxRate === rate}
-            onClick={() => updateTaxRate(rate)}
-          >
-            {rate === "low" ? "轻税" : rate === "standard" ? "常税" : "重税"}
-          </button>
-        ))}
-      </section>
-
-      {granaryPolicy.id !== null ? (
-        <section className="storage-panel" aria-label="粮仓接收策略">
-          <span>粮仓 #{granaryPolicy.id}</span>
-          {CROP_OPTIONS.map((option) => {
-            const accepted = granaryPolicy.accepted.includes(option.type);
-            return (
-              <button
-                key={option.type}
-                type="button"
-                className={accepted ? "active" : undefined}
-                aria-pressed={accepted}
-                data-testid={`granary-accept-${option.type}`}
-                onClick={() => toggleGranaryCrop(option.type)}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+      <aside className="governance-dock" aria-label="城市政令">
+        <span className="governance-label">政令案条</span>
+        <section className="labor-panel" aria-label="劳动力政策">
+          <span>工资</span>
+          {(["low", "standard", "high"] as const).map((wageLevel) => (
+            <button
+              key={wageLevel}
+              type="button"
+              className={
+                laborPolicy.wageLevel === wageLevel ? "active" : undefined
+              }
+              disabled={gameStatus !== "游戏已就绪"}
+              data-testid={`wage-${wageLevel}`}
+              aria-pressed={laborPolicy.wageLevel === wageLevel}
+              onClick={() => updateWage(wageLevel)}
+            >
+              {wageLevel === "low"
+                ? "节俭"
+                : wageLevel === "standard"
+                  ? "常例"
+                  : "优厚"}
+            </button>
+          ))}
+          <span>优先</span>
+          {(
+            [
+              ["agriculture", "农"],
+              ["commerce", "商"],
+              ["services", "役"],
+            ] as const
+          ).map(([sector, label]) => (
+            <button
+              key={sector}
+              type="button"
+              className={
+                laborPolicy.priorities[0] === sector ? "active" : undefined
+              }
+              disabled={gameStatus !== "游戏已就绪"}
+              data-testid={`priority-${sector}`}
+              aria-pressed={laborPolicy.priorities[0] === sector}
+              onClick={() => prioritizeSector(sector)}
+            >
+              {label} {laborSectors[sector]}
+            </button>
+          ))}
         </section>
-      ) : null}
 
-      <section className="religion-panel" aria-label="神农供奉">
-        <span data-testid="shennong-favor">神农 {shennongFavor}/3</span>
-        <button
-          type="button"
-          disabled={!offeringTarget || gameStatus !== "游戏已就绪"}
-          data-testid="make-offering"
-          onClick={offerToShennong}
-        >
-          {offeringTarget
-            ? `供奉${CROP_LABELS[offeringTarget.cropType]}`
-            : "暂无供品"}
-        </button>
-        <button
-          type="button"
-          disabled={!festivalAvailable || gameStatus !== "游戏已就绪"}
-          data-testid="hold-festival"
-          onClick={holdFestival}
-        >
-          举办新年祭
-        </button>
-        <span data-testid="last-festival">
-          {lastFestivalYear ? `${lastFestivalYear}年已办` : "尚未举办"}
-        </span>
-      </section>
+        <section className="tax-panel" aria-label="政府税收">
+          <span data-testid="tax-summary">
+            国库 {treasury} · 征 {taxableHouses} 户 · 月税 +{taxRevenue} · 薪 -
+            {laborPayroll} · 贸易 +{tradeRevenue}
+          </span>
+          <span data-testid="sentiment-reasons">
+            民心 {citySentiment} · {sentimentReasons}
+          </span>
+          <span data-testid="migration-attractiveness">
+            迁引 {migrationAppeal}
+          </span>
+          <span data-testid="migration-diagnostic">{migrationDiagnostic}</span>
+          {(["low", "standard", "high"] as const).map((rate) => (
+            <button
+              key={rate}
+              type="button"
+              className={taxRate === rate ? "active" : undefined}
+              disabled={gameStatus !== "游戏已就绪"}
+              data-testid={`tax-rate-${rate}`}
+              aria-pressed={taxRate === rate}
+              onClick={() => updateTaxRate(rate)}
+            >
+              {rate === "low" ? "轻税" : rate === "standard" ? "常税" : "重税"}
+            </button>
+          ))}
+        </section>
 
-      <section className="diplomacy-panel" aria-label="外交使者">
-        <span data-testid="diplomacy-status">{diplomacyStatus}</span>
-        <span data-testid="envoy-count">使者 {envoyCount}</span>
-        <button
-          type="button"
-          disabled={!offeringTarget || gameStatus !== "游戏已就绪"}
-          data-testid="send-gift"
-          onClick={sendDiplomaticGift}
-        >
-          {offeringTarget
-            ? `赠送${CROP_LABELS[offeringTarget.cropType]}`
-            : "暂无礼物"}
-        </button>
-      </section>
+        {granaryPolicy.id !== null ? (
+          <section className="storage-panel" aria-label="粮仓接收策略">
+            <span>粮仓 #{granaryPolicy.id}</span>
+            {CROP_OPTIONS.map((option) => {
+              const accepted = granaryPolicy.accepted.includes(option.type);
+              return (
+                <button
+                  key={option.type}
+                  type="button"
+                  className={accepted ? "active" : undefined}
+                  aria-pressed={accepted}
+                  data-testid={`granary-accept-${option.type}`}
+                  onClick={() => toggleGranaryCrop(option.type)}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </section>
+        ) : null}
+
+        <section className="religion-panel" aria-label="神农供奉">
+          <span data-testid="shennong-favor">神农 {shennongFavor}/3</span>
+          <button
+            type="button"
+            disabled={!offeringTarget || gameStatus !== "游戏已就绪"}
+            data-testid="make-offering"
+            onClick={offerToShennong}
+          >
+            {offeringTarget
+              ? `供奉${CROP_LABELS[offeringTarget.cropType]}`
+              : "暂无供品"}
+          </button>
+          <button
+            type="button"
+            disabled={!festivalAvailable || gameStatus !== "游戏已就绪"}
+            data-testid="hold-festival"
+            onClick={holdFestival}
+          >
+            举办新年祭
+          </button>
+          <span data-testid="last-festival">
+            {lastFestivalYear ? `${lastFestivalYear}年已办` : "尚未举办"}
+          </span>
+        </section>
+
+        <section className="diplomacy-panel" aria-label="外交使者">
+          <span data-testid="diplomacy-status">{diplomacyStatus}</span>
+          <span data-testid="envoy-count">使者 {envoyCount}</span>
+          <button
+            type="button"
+            disabled={!offeringTarget || gameStatus !== "游戏已就绪"}
+            data-testid="send-gift"
+            onClick={sendDiplomaticGift}
+          >
+            {offeringTarget
+              ? `赠送${CROP_LABELS[offeringTarget.cropType]}`
+              : "暂无礼物"}
+          </button>
+        </section>
+      </aside>
 
       <section className="status-ribbon">
         <span

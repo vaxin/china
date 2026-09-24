@@ -48,16 +48,23 @@ interface RoadCoordinate {
 interface RoadBounds {
   width: number;
   height: number;
+  originX?: number;
+  originY?: number;
 }
 
 const roadKey = (road: RoadCoordinate) => `${road.x}:${road.y}`;
 
 const inBounds = (road: RoadCoordinate, bounds?: RoadBounds) =>
   !bounds ||
-  (road.x >= 0 &&
-    road.y >= 0 &&
-    road.x < bounds.width &&
-    road.y < bounds.height);
+  (road.x >= (bounds.originX ?? 0) &&
+    road.y >= (bounds.originY ?? 0) &&
+    road.x < (bounds.originX ?? 0) + bounds.width &&
+    road.y < (bounds.originY ?? 0) + bounds.height);
+
+const boundedRoadKey = (road: RoadCoordinate, bounds: RoadBounds) =>
+  (road.y - (bounds.originY ?? 0)) * bounds.width +
+  road.x -
+  (bounds.originX ?? 0);
 
 const connectionMaskFromOccupied = (
   road: RoadCoordinate,
@@ -98,7 +105,7 @@ export function roadConnectionMasks(
   const occupied = new Set(validRoads.map(roadKey));
   return new Map(
     validRoads.map((road) => [
-      road.y * bounds.width + road.x,
+      boundedRoadKey(road, bounds),
       connectionMaskFromOccupied(road, occupied),
     ]),
   );

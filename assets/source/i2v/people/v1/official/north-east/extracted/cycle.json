@@ -1,0 +1,88 @@
+{
+  "video": "assets/source/i2v/people/v1/official/north-east/raw.mp4",
+  "sourceFrameCount": 121,
+  "fps": 24.0,
+  "cycleStartFrame": 31,
+  "cyclePeriodFrames": 23,
+  "cycleDurationSeconds": 0.9583333333333334,
+  "selectedSourceFrames": [
+    31,
+    34,
+    37,
+    40,
+    43,
+    45,
+    48,
+    51
+  ],
+  "bestPeriodScore": 0.0016412143595516682,
+  "nextBestPeriod": {
+    "frames": 24,
+    "score": 0.0032939573284238577
+  },
+  "adjacentFrameDifferences": [
+    0.01100898813456297,
+    0.01207897812128067,
+    0.01599336974322796,
+    0.009653737768530846,
+    0.007866979576647282,
+    0.013295716606080532,
+    0.01573106274008751,
+    0.013293342664837837
+  ],
+  "foregroundBounds": [
+    [
+      86,
+      27,
+      184,
+      251
+    ],
+    [
+      89,
+      25,
+      178,
+      253
+    ],
+    [
+      94,
+      24,
+      171,
+      247
+    ],
+    [
+      97,
+      25,
+      178,
+      247
+    ],
+    [
+      91,
+      27,
+      185,
+      248
+    ],
+    [
+      91,
+      26,
+      177,
+      249
+    ],
+    [
+      95,
+      25,
+      171,
+      244
+    ],
+    [
+      89,
+      25,
+      180,
+      249
+    ]
+  ],
+  "outputs": {
+    "sheet": "assets/source/i2v/people/v1/official/north-east/extracted/cycle-1x8.png",
+    "contact": "assets/source/i2v/people/v1/official/north-east/extracted/contact.png",
+    "gif": "assets/source/i2v/people/v1/official/north-east/extracted/cycle.gif"
+  }
+}

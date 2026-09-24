@@ -1,0 +1,34 @@
+# 第一垂直切片验收：执行记录
+
+对应验收文档：[acceptance.md](./acceptance.md)
+
+规则摘要：本文件只记录本轮实际打开并用于验收成稿的资料；主验收稿仅保留本文件链接。后续实质修订主稿时，在表末追加真实对照记录。
+
+| 时间 | 实际路径 | 本会话用途 |
+| --- | --- | --- |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/SKILL.md` | ATDD/TDD 流程、确认闸门与执行记录规则 |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/references/tdd-core.md` | 红→验红→绿→验绿→重构纪律 |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/testing-style-observable-behavior.md` | 用可观察 WHAT 编写断言 |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/testing-anti-patterns.md` | Mock 禁区与测试反模式 |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/references/atdd-checklist-template.md` | 主表、G/W/T、确认表和执行记录模板 |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/references/acceptance-dimensions-general-index.md` | 通用验收维度入口与查漏规则 |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/references/domain-system-focus-areas.md` | 判定本轮领域形态 N/A |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/references/cross-cutting-coverage-dimensions.md` | UX、撤销、本地化与观测维度查漏 |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/references/acceptance-general-ui-pages.md` | 页面加载/错态、写后读、刷新恢复判据 |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/acceptance-tdd-full-cycle/references/acceptance-general-user-interactions.md` | 点击、双击、拖拽、反馈与 E2E 判据 |
+| 2026-07-10 | `网页版技术选型.md` | 3D 技术边界、Worker、存档和浏览器策略（非技能包） |
+| 2026-07-10 | `实现启动计划.md` | 第一条端到端实现路径和阶段范围（非技能包） |
+| 2026-07-10 | `龙之崛起重制_研究与设计基线.md` | 产品定位与原创边界（非技能包） |
+| 2026-07-10 | `第一垂直切片-验收.md` | 回填用户确认闸门与可开发结论（非技能包） |
+| 2026-07-10 | `/Users/bytedance/.codex/skills/frontend-design/SKILL.md` | 3D 游戏 UI 视觉方向、自审与可访问性要求 |
+| 2026-07-10 | `第一垂直切片-结构设计.md` | 由确认场景反推模块、协议、存档与渲染边界（非技能包） |
+| 2026-07-10 | `packages/protocol/src/game-protocol.test.ts` | 协议与存档边界的 TDD 验收证据（非技能包） |
+| 2026-07-10 | `packages/simulation/src/building-placement.test.ts` | 合法、重叠、越界和双击建造规则证据（非技能包） |
+| 2026-07-10 | `packages/simulation/src/placement-preview.test.ts` | 预览与权威建造一致性证据（非技能包） |
+| 2026-07-10 | `packages/simulation/src/world-hydration.test.ts` | 刷新恢复与实体 ID 延续证据（非技能包） |
+| 2026-07-10 | `packages/simulation/src/worker-runtime.test.ts` | Worker 请求/响应集成证据（非技能包） |
+| 2026-07-10 | `packages/persistence/src/save-store.integration.test.ts` | IndexedDB 往返与坏档隔离证据（非技能包） |
+| 2026-07-10 | `apps/game-web/e2e/first-vertical-slice.spec.ts` | S-01～S-08 浏览器验收证据（非技能包） |
+| 2026-07-10 | `packages/protocol/src/index.ts` | 审计后补充 Worker 入站与世界语义校验（非技能包） |
+| 2026-07-10 | `playwright.config.ts` | 生产预览、真实 Chromium channel 与 SwiftShader 配置（非技能包） |
+| 2026-07-10 | `.github/workflows/ci.yml` | 全量门禁持续集成（非技能包） |

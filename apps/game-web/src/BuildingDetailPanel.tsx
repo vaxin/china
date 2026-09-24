@@ -1,5 +1,22 @@
 import type { BuildingView, WorldSnapshot } from "@empire/protocol";
 import {
+  ArrowLeft,
+  Bank,
+  Buildings,
+  Drop,
+  Hammer,
+  Handshake,
+  House,
+  MusicNotes,
+  Plant,
+  Shield,
+  Storefront,
+  Warehouse,
+  X,
+  Yarn,
+  type Icon,
+} from "@phosphor-icons/react";
+import {
   CROP_TYPES,
   CITY_GATE_TILE,
   type CropType,
@@ -75,7 +92,11 @@ function footprintBorderConnected(
   connected: Set<string>,
 ): boolean {
   for (let dx = building.x; dx < building.x + building.footprint.width; dx++) {
-    for (let dy = building.y; dy < building.y + building.footprint.height; dy++) {
+    for (
+      let dy = building.y;
+      dy < building.y + building.footprint.height;
+      dy++
+    ) {
       const neighbors = [
         { x: dx - 1, y: dy },
         { x: dx + 1, y: dy },
@@ -119,8 +140,7 @@ export function BuildingDetailPanel({
   const element = elementAtTile(building.x, building.y);
   const fengShui = fengShuiAtSite(building.typeId, building.x, building.y);
 
-  const typeLabel =
-    buildingTypeLabel[building.typeId] ?? building.typeId;
+  const typeLabel = buildingTypeLabel[building.typeId] ?? building.typeId;
 
   return (
     <aside className="population-panel" aria-label={`${typeLabel}详情`}>
@@ -130,7 +150,7 @@ export function BuildingDetailPanel({
         onClick={onClose}
         aria-label={`关闭${typeLabel}详情`}
       >
-        ✕
+        <X size={16} weight="bold" aria-hidden="true" />
       </button>
       <div className="population-panel-inner">
         {onBack && (
@@ -139,7 +159,8 @@ export function BuildingDetailPanel({
             className="population-back-btn"
             onClick={onBack}
           >
-            ← 返回
+            <ArrowLeft size={14} aria-hidden="true" />
+            返回
           </button>
         )}
 
@@ -151,10 +172,7 @@ export function BuildingDetailPanel({
             {typeLabel} #{building.id}
           </h2>
 
-          <DetailRow
-            label="位置"
-            value={`${building.x}, ${building.y}`}
-          />
+          <DetailRow label="位置" value={`${building.x}, ${building.y}`} />
           <DetailRow
             label="占地"
             value={`${building.footprint.width}×${building.footprint.height}`}
@@ -193,22 +211,23 @@ export function BuildingDetailPanel({
 
 // ---- Type-specific sections ----
 
-function buildingTypeIcon(typeId: string): string {
-  const icons: Record<string, string> = {
-    well: "💧",
-    farm: "🌾",
-    granary: "🏛️",
-    market: "🛒",
-    "hemp-farm": "🌿",
-    weaver: "🧵",
-    weaponsmith: "⚔️",
-    "infantry-fort": "🛡️",
-    "tax-office": "📜",
-    "music-school": "🎵",
-    "trading-post": "🚩",
-    house: "🏠",
+function buildingTypeIcon(typeId: string) {
+  const icons: Record<string, Icon> = {
+    well: Drop,
+    farm: Plant,
+    granary: Warehouse,
+    market: Storefront,
+    "hemp-farm": Plant,
+    weaver: Yarn,
+    weaponsmith: Hammer,
+    "infantry-fort": Shield,
+    "tax-office": Bank,
+    "music-school": MusicNotes,
+    "trading-post": Handshake,
+    house: House,
   };
-  return icons[typeId] ?? "🏗️";
+  const BuildingIcon = icons[typeId] ?? Buildings;
+  return <BuildingIcon size={18} weight="duotone" aria-hidden="true" />;
 }
 
 function renderBuildingSpecifics(
@@ -236,7 +255,9 @@ function renderBuildingSpecifics(
         <WeaponsmithDetail building={building as WeaponsmithBuildingView} />
       );
     case "infantry-fort":
-      return <InfantryFortDetail building={building as InfantryFortBuildingView} />;
+      return (
+        <InfantryFortDetail building={building as InfantryFortBuildingView} />
+      );
     case "tax-office":
       return <TaxOfficeDetail building={building as TaxOfficeBuildingView} />;
     case "music-school":
@@ -266,13 +287,14 @@ function FarmDetail({ building }: { building: FarmBuildingView }) {
         label="种植作物"
         value={
           hasCrop
-            ? cropLabel[building.cropType!] ?? building.cropType!
+            ? (cropLabel[building.cropType!] ?? building.cropType!)
             : "休耕中"
         }
       />
       {building.foodStock !== undefined && (
         <DetailRow label="产量库存" value={`${building.foodStock}`} />
       )}
+      <FoodBusinessEconomy building={building} />
     </>
   );
 }
@@ -306,6 +328,7 @@ function GranaryDetail({ building }: { building: GranaryBuildingView }) {
           }`}
         />
       ))}
+      <FoodBusinessEconomy building={building} />
     </>
   );
 }
@@ -340,8 +363,32 @@ function MarketDetail({
         label="粮食品质"
         value={foodQualityLabel[quality] ?? quality}
       />
+      <FoodBusinessEconomy building={building} />
       {clothingStock > 0 && (
         <DetailRow label="衣物库存" value={`${clothingStock}`} />
+      )}
+    </>
+  );
+}
+
+function FoodBusinessEconomy({
+  building,
+}: {
+  building: FarmBuildingView | GranaryBuildingView | MarketBuildingView;
+}) {
+  const workers = building.staffedWorkers ?? 0;
+  return (
+    <>
+      <DetailRow
+        label="经营余额"
+        value={`${building.operatingCash ?? 12} 钱`}
+      />
+      <DetailRow
+        label="当月人手"
+        value={workers > 0 ? `${workers} 人` : "缺工"}
+      />
+      {(building.wageArrears ?? 0) > 0 && (
+        <DetailRow label="累计欠薪" value={`${building.wageArrears} 钱`} />
       )}
     </>
   );
@@ -387,11 +434,7 @@ function InfantryFortDetail({
   );
 }
 
-function TaxOfficeDetail({
-  building,
-}: {
-  building: TaxOfficeBuildingView;
-}) {
+function TaxOfficeDetail({ building }: { building: TaxOfficeBuildingView }) {
   return (
     <>
       <DetailRule />

@@ -93,7 +93,7 @@ describe("市场建造", () => {
       accepted: false,
       reasonCode: "occupied",
     });
-    expect(build(createWorld(), "market", 31, 31).result).toMatchObject({
+    expect(build(createWorld(), "market", 63, 63).result).toMatchObject({
       accepted: false,
       reasonCode: "out-of-bounds",
     });
@@ -326,10 +326,10 @@ describe("市场补货与住宅口粮", () => {
   });
 
   it.each([
-    ["服务范围末格", 9, 9, 0, 3],
+    ["服务范围末格", 9, 9, 0, 0],
     ["超出服务范围一格", 10, 10, 1, 0],
   ])(
-    "市场到住宅%s按道路距离 8/9 正确判定",
+    "市场到住宅%s按道路距离 8/9 正确判定是否生成在途订单",
     (_name, houseX, roadLength, marketStock, reserve) => {
       const world = createWorld();
       build(world, "market", 0, 17);
@@ -361,6 +361,9 @@ describe("市场补货与住宅口粮", () => {
       expect(snapshotWorld(world).households).toMatchObject([
         { houseId: 2, foodReserveTicks: reserve },
       ]);
+      expect(snapshotWorld(world).householdFoodOrders ?? []).toHaveLength(
+        marketStock === 0 ? 1 : 0,
+      );
     },
   );
 
@@ -391,12 +394,13 @@ describe("市场补货与住宅口粮", () => {
 
     advanceTicks(world, 1);
 
-    expect(snapshotWorld(world).households).toEqual([
+    expect(snapshotWorld(world).households).toMatchObject([
       {
         houseId: 2,
         residents: 5,
-        foodReserveTicks: 3,
-        foodQuality: "bland",
+        foodReserveTicks: 0,
+        foodQuality: "none",
+        foodShortageReason: "delivery-pending",
       },
       {
         houseId: 3,
@@ -406,9 +410,69 @@ describe("市场补货与住宅口粮", () => {
       },
     ]);
     expect(stocks(world)).toEqual([{ typeId: "market", foodStock: 1 }]);
+    expect(snapshotWorld(world).householdFoodOrders).toMatchObject([
+      { houseId: 2, marketId: 1 },
+    ]);
   });
 
-  it("生产、入仓、市场补货、配送和住宅升级可在一个 tick 原子闭环", () => {
+  it("市场缺席时，饥饿住户会沿路从可达粮仓取得一份真实粮食", () => {
+    const world = createWorld();
+    build(world, "house", 1, 14);
+    build(world, "granary", 4, 14);
+    road(world, [
+      { x: 0, y: 15 },
+      { x: 0, y: 16 },
+      { x: 1, y: 16 },
+      { x: 2, y: 16 },
+      { x: 3, y: 16 },
+      { x: 4, y: 16 },
+    ]);
+    advanceTicks(world, 1);
+    const granary = world.buildings.find(
+      (building) => building.typeId === "granary",
+    );
+    if (!granary || granary.typeId !== "granary") {
+      throw new Error("测试粮仓不存在");
+    }
+    granary.foodStock = 1;
+    granary.foodStocks.millet = 1;
+    world.households[0]!.foodReserveTicks = 0;
+    world.households[0]!.foodQuality = "none";
+
+    advanceTicks(world, 1);
+
+    expect(stocks(world)).toEqual([{ typeId: "granary", foodStock: 0 }]);
+    expect(snapshotWorld(world).households).toMatchObject([
+      { houseId: 1, foodReserveTicks: 3, foodQuality: "bland" },
+    ]);
+  });
+
+  it("粮仓道路断开时，饥饿住户不会隔空取得粮食", () => {
+    const world = createWorld();
+    build(world, "house", 1, 14);
+    build(world, "granary", 4, 14);
+    road(world, [{ x: 0, y: 15 }]);
+    advanceTicks(world, 1);
+    const granary = world.buildings.find(
+      (building) => building.typeId === "granary",
+    );
+    if (!granary || granary.typeId !== "granary") {
+      throw new Error("测试粮仓不存在");
+    }
+    granary.foodStock = 1;
+    granary.foodStocks.millet = 1;
+    world.households[0]!.foodReserveTicks = 0;
+    world.households[0]!.foodQuality = "none";
+
+    advanceTicks(world, 1);
+
+    expect(stocks(world)).toEqual([{ typeId: "granary", foodStock: 1 }]);
+    expect(snapshotWorld(world).households).toMatchObject([
+      { houseId: 1, foodReserveTicks: 0, foodQuality: "none" },
+    ]);
+  });
+
+  it("生产、入仓和下单在同 tick 完成，下一 tick 配送并升级住宅", () => {
     const world = createWorld();
     build(world, "house", 1, 14);
     build(world, "well", 0, 14);
@@ -447,7 +511,22 @@ describe("市场补货与住宅口粮", () => {
 
     expect(snapshotWorld(world)).toMatchObject({
       tick: 6,
-      revision: revisionBefore + 1,
+      buildings: [
+        { typeId: "house", level: 1 },
+        { typeId: "well" },
+        { typeId: "market", foodStock: 0 },
+        { typeId: "farm", foodStock: 0 },
+        { typeId: "granary", foodStock: 0 },
+      ],
+      households: [{ houseId: 1, residents: 5, foodReserveTicks: 0 }],
+      householdFoodOrders: [{ houseId: 1, marketId: 3 }],
+    });
+
+    advanceTicks(world, 1);
+
+    expect(snapshotWorld(world)).toMatchObject({
+      tick: 7,
+      revision: revisionBefore + 2,
       buildings: [
         { typeId: "house", level: 2 },
         { typeId: "well" },
@@ -523,7 +602,7 @@ describe("市场补货与住宅口粮", () => {
     });
 
     road(world, [{ x: 4, y: 16 }]);
-    advanceTicks(world, 1);
+    advanceTicks(world, 2);
     expect(snapshotWorld(world)).toMatchObject({
       buildings: [
         { typeId: "house", level: 2 },

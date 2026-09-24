@@ -132,7 +132,7 @@ describe("分品类粮食物流", () => {
     market.foodStocks.soybean = 1;
     market.foodStocks.millet = 1;
 
-    advanceTicks(world, 1);
+    advanceTicks(world, 2);
 
     expect(snapshotWorld(world)).toMatchObject({
       buildings: [

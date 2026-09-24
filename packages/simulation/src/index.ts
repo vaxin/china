@@ -8,6 +8,7 @@ import type {
   GranaryBuildingView,
   HempFarmBuildingView,
   HouseBuildingView,
+  HouseholdFoodOrderView,
   HouseholdView,
   LaborPolicyView,
   LaborSector,
@@ -23,6 +24,7 @@ import type {
   WeaverBuildingView,
   WeaponsmithBuildingView,
   WorldSnapshot,
+  TerrainContract,
   WorkerRequest,
   WorkerResponse,
 } from "@empire/protocol";
@@ -51,9 +53,12 @@ export {
 } from "./city-sentiment";
 import {
   CITY_GATE_TILE,
+  DEFAULT_TERRAIN_CONTRACT,
   CROP_TYPES,
   FARM_FOOTPRINT,
   FARM_STOCK_CAPACITY,
+  FOOD_BUSINESS_STARTING_CASH,
+  FOOD_UNITS_PER_FIVE_RESIDENTS,
   FOOD_TRANSPORT_RANGE,
   GRANARY_FOOTPRINT,
   GRANARY_STOCK_CAPACITY,
@@ -61,6 +66,8 @@ import {
   INFANTRY_FORT_FOOTPRINT,
   HOUSE_CAPACITY,
   HOUSEHOLD_FOOD_RESERVE_MAX,
+  HOUSEHOLD_FOOD_PRICE,
+  HOUSEHOLD_STARTING_CASH,
   HOUSE_FOOTPRINT,
   MAP_SIZE,
   MARKET_FOOTPRINT,
@@ -76,6 +83,10 @@ import {
   WEAVER_FOOTPRINT,
   WEAPONSMITH_FOOTPRINT,
   workerRequestSchema,
+  isFootprintBuildableOnTerrain,
+  isTerrainTileBuildable,
+  isTileInsideTerrain,
+  sampleTerrainCover,
 } from "@empire/protocol";
 import { cropPhaseAtTick } from "./crop-calendar";
 import { nextCitySentiment } from "./city-sentiment";
@@ -90,15 +101,26 @@ import {
   DEFAULT_LABOR_POLICY,
   migrationAttractiveness,
 } from "./labor-economy";
+import {
+  addLivelihoodLedgerEntry,
+  allocateHouseholdWorkers,
+  settleHouseholdWages,
+  WAGE_RATE,
+  type LivelihoodLedgerEntry,
+} from "./household-livelihood";
 
 export interface WorldState {
   readonly kind: "world-state";
   tick: number;
   revision: number;
   nextEntityId: number | null;
+  terrain: TerrainContract;
   buildings: BuildingView[];
   roads: TileCoordinate[];
+  walls: TileCoordinate[];
+  clearedVegetation: TileCoordinate[];
   households: HouseholdView[];
+  householdFoodOrders: HouseholdFoodOrderView[];
   migrants: MigrantView[];
   performers: PerformerView[];
   citizens: CitizenView[];
@@ -113,7 +135,8 @@ export interface CommandApplication {
   snapshot: WorldSnapshot;
 }
 
-export type PlacementStatus = "valid" | "occupied" | "out-of-bounds";
+export type PlacementStatus =
+  "valid" | "occupied" | "vegetation" | "out-of-bounds" | "steep-slope";
 export type DemolitionStatus = "valid" | "empty" | "out-of-bounds";
 
 function isHouse(building: BuildingView): building is HouseBuildingView {
@@ -185,6 +208,9 @@ function cloneBuilding(building: BuildingView): BuildingView {
     return {
       ...building,
       cropType: building.cropType ?? "millet",
+      operatingCash: building.operatingCash ?? FOOD_BUSINESS_STARTING_CASH,
+      wageArrears: building.wageArrears ?? 0,
+      staffedWorkers: building.staffedWorkers ?? 0,
       footprint: { width: FARM_FOOTPRINT, height: FARM_FOOTPRINT },
     };
   }
@@ -199,6 +225,9 @@ function cloneBuilding(building: BuildingView): BuildingView {
       ...(building.acceptedCrops
         ? { acceptedCrops: [...building.acceptedCrops] }
         : {}),
+      operatingCash: building.operatingCash ?? FOOD_BUSINESS_STARTING_CASH,
+      wageArrears: building.wageArrears ?? 0,
+      staffedWorkers: building.staffedWorkers ?? 0,
       footprint: { width: GRANARY_FOOTPRINT, height: GRANARY_FOOTPRINT },
     };
   }
@@ -210,6 +239,9 @@ function cloneBuilding(building: BuildingView): BuildingView {
     return {
       ...building,
       foodStocks: { ...foodStocks },
+      operatingCash: building.operatingCash ?? FOOD_BUSINESS_STARTING_CASH,
+      wageArrears: building.wageArrears ?? 0,
+      staffedWorkers: building.staffedWorkers ?? 0,
       footprint: { width: MARKET_FOOTPRINT, height: MARKET_FOOTPRINT },
     };
   }
@@ -280,11 +312,16 @@ function cloneBuilding(building: BuildingView): BuildingView {
 }
 
 function tileKey(tile: TileCoordinate): number {
-  return tile.y * MAP_SIZE + tile.x;
+  return (
+    (tile.y - DEFAULT_TERRAIN_CONTRACT.originY) *
+      DEFAULT_TERRAIN_CONTRACT.width +
+    tile.x -
+    DEFAULT_TERRAIN_CONTRACT.originX
+  );
 }
 
 function isInsideMap(tile: TileCoordinate): boolean {
-  return tile.x >= 0 && tile.y >= 0 && tile.x < MAP_SIZE && tile.y < MAP_SIZE;
+  return isTileInsideTerrain(tile);
 }
 
 type BuildingTypeId = Extract<GameCommand, { type: "build" }>["buildingTypeId"];
@@ -346,19 +383,34 @@ function footprintContainsRoad(
 }
 
 function evaluateBuildingPlacement(
-  snapshot: Pick<WorldSnapshot, "map" | "buildings" | "roads">,
+  snapshot: Pick<
+    WorldSnapshot,
+    "map" | "terrain" | "buildings" | "roads" | "walls" | "clearedVegetation"
+  >,
   typeId: BuildingTypeId,
   x: number,
   y: number,
 ): PlacementStatus {
   const footprint = footprintFor(typeId);
+  const terrain = snapshot.terrain ?? DEFAULT_TERRAIN_CONTRACT;
   if (
-    x < 0 ||
-    y < 0 ||
-    x + footprint > snapshot.map.width ||
-    y + footprint > snapshot.map.height
+    !isTileInsideTerrain({ x, y }, terrain) ||
+    !isTileInsideTerrain(
+      { x: x + footprint - 1, y: y + footprint - 1 },
+      terrain,
+    )
   ) {
     return "out-of-bounds";
+  }
+  if (!isFootprintBuildableOnTerrain(x, y, footprint, footprint, terrain)) {
+    return "steep-slope";
+  }
+  for (let offsetY = 0; offsetY < footprint; offsetY += 1) {
+    for (let offsetX = 0; offsetX < footprint; offsetX += 1) {
+      if (hasVegetationObstacle(snapshot, x + offsetX, y + offsetY)) {
+        return "vegetation";
+      }
+    }
   }
   const coversCityGate =
     CITY_GATE_TILE.x >= x &&
@@ -370,7 +422,8 @@ function evaluateBuildingPlacement(
     snapshot.buildings.some((building) =>
       footprintsOverlap(x, y, footprint, building),
     ) ||
-    footprintContainsRoad(snapshot.roads, x, y, footprint)
+    footprintContainsRoad(snapshot.roads, x, y, footprint) ||
+    footprintContainsRoad(snapshot.walls ?? [], x, y, footprint)
   ) {
     return "occupied";
   }
@@ -478,12 +531,38 @@ export function evaluateRoadPlacement(
   x: number,
   y: number,
 ): PlacementStatus {
-  if (x < 0 || y < 0 || x >= snapshot.map.width || y >= snapshot.map.height) {
+  const terrain = snapshot.terrain ?? DEFAULT_TERRAIN_CONTRACT;
+  if (!isTileInsideTerrain({ x, y }, terrain)) {
     return "out-of-bounds";
   }
+  if (hasVegetationObstacle(snapshot, x, y)) return "vegetation";
   const tile = { x, y };
   if (
     snapshot.roads.some((road) => road.x === x && road.y === y) ||
+    (snapshot.walls ?? []).some((wall) => wall.x === x && wall.y === y) ||
+    snapshot.buildings.some((building) => tileInsideBuilding(tile, building))
+  ) {
+    return "occupied";
+  }
+  return "valid";
+}
+
+export function evaluateWallPlacement(
+  snapshot: WorldSnapshot,
+  x: number,
+  y: number,
+): PlacementStatus {
+  const terrain = snapshot.terrain ?? DEFAULT_TERRAIN_CONTRACT;
+  if (!isTileInsideTerrain({ x, y }, terrain)) {
+    return "out-of-bounds";
+  }
+  if (!isTerrainTileBuildable({ x, y }, terrain)) return "steep-slope";
+  if (hasVegetationObstacle(snapshot, x, y)) return "vegetation";
+  const tile = { x, y };
+  if (
+    (x === CITY_GATE_TILE.x && y === CITY_GATE_TILE.y) ||
+    snapshot.roads.some((road) => road.x === x && road.y === y) ||
+    (snapshot.walls ?? []).some((wall) => wall.x === x && wall.y === y) ||
     snapshot.buildings.some((building) => tileInsideBuilding(tile, building))
   ) {
     return "occupied";
@@ -496,14 +575,32 @@ export function evaluateDemolition(
   x: number,
   y: number,
 ): DemolitionStatus {
-  if (x < 0 || y < 0 || x >= snapshot.map.width || y >= snapshot.map.height) {
+  if (
+    !isTileInsideTerrain({ x, y }, snapshot.terrain ?? DEFAULT_TERRAIN_CONTRACT)
+  ) {
     return "out-of-bounds";
   }
   const tile = { x, y };
   return snapshot.roads.some((road) => road.x === x && road.y === y) ||
-    snapshot.buildings.some((building) => tileInsideBuilding(tile, building))
+    (snapshot.walls ?? []).some((wall) => wall.x === x && wall.y === y) ||
+    snapshot.buildings.some((building) => tileInsideBuilding(tile, building)) ||
+    hasVegetationObstacle(snapshot, x, y)
     ? "valid"
     : "empty";
+}
+
+export function hasVegetationObstacle(
+  snapshot: Pick<WorldSnapshot, "terrain" | "clearedVegetation">,
+  x: number,
+  y: number,
+) {
+  const terrain = snapshot.terrain ?? DEFAULT_TERRAIN_CONTRACT;
+  if (!sampleTerrainCover(x + 0.5, y + 0.5, terrain).vegetationObstacle) {
+    return false;
+  }
+  return !(snapshot.clearedVegetation ?? []).some(
+    (tile) => tile.x === x && tile.y === y,
+  );
 }
 
 export interface SimulationRuntime {
@@ -556,9 +653,13 @@ export function createWorld(): WorldState {
     tick: 0,
     revision: 0,
     nextEntityId: 1,
+    terrain: { ...DEFAULT_TERRAIN_CONTRACT },
     buildings: [],
     roads: [],
+    walls: [],
+    clearedVegetation: [],
     households: [],
+    householdFoodOrders: [],
     migrants: [],
     performers: [],
     citizens: [],
@@ -576,7 +677,53 @@ export function createWorld(): WorldState {
       taxableHouses: 0,
       sentiment: 50,
       lastTradeRevenue: 0,
+      foodOrderEscrow: 0,
     },
+  };
+}
+
+function householdFoodNeed(
+  household: Pick<HouseholdView, "residents">,
+): number {
+  return Math.ceil(household.residents / 5) * FOOD_UNITS_PER_FIVE_RESIDENTS;
+}
+
+function householdFoodMonths(
+  household: Pick<HouseholdView, "residents"> & { foodReserveUnits: number },
+): HouseholdView["foodReserveTicks"] {
+  return Math.min(
+    HOUSEHOLD_FOOD_RESERVE_MAX,
+    Math.floor(household.foodReserveUnits / householdFoodNeed(household)),
+  ) as HouseholdView["foodReserveTicks"];
+}
+
+function householdFoodTarget(
+  household: Pick<HouseholdView, "residents">,
+): number {
+  return householdFoodNeed(household) * HOUSEHOLD_FOOD_RESERVE_MAX;
+}
+
+function normalizeHouseholdLivelihood(household: HouseholdView): HouseholdView {
+  const foodReserveUnits =
+    household.foodReserveUnits ??
+    householdFoodNeed(household) * household.foodReserveTicks;
+  return {
+    ...household,
+    foodReserveUnits,
+    foodReserveTicks: householdFoodMonths({
+      residents: household.residents,
+      foodReserveUnits,
+    }),
+    cash: household.cash ?? HOUSEHOLD_STARTING_CASH,
+    employedWorkers: household.employedWorkers ?? 0,
+    lastIncome: household.lastIncome ?? 0,
+    lastFoodExpense: household.lastFoodExpense ?? 0,
+    wageArrears: household.wageArrears ?? 0,
+    taxArrears: household.taxArrears ?? 0,
+    foodShortageReason: household.foodShortageReason ?? "none",
+    livelihoodLedger: (household.livelihoodLedger ?? []).map((entry) => ({
+      ...entry,
+    })),
   };
 }
 
@@ -594,12 +741,22 @@ export function hydrateWorld(snapshot: WorldSnapshot): WorldState {
     revision: snapshot.revision,
     nextEntityId:
       highestEntityId === Number.MAX_SAFE_INTEGER ? null : highestEntityId + 1,
+    terrain: { ...(snapshot.terrain ?? DEFAULT_TERRAIN_CONTRACT) },
     buildings,
     roads: snapshot.roads
       .map((road) => ({ ...road }))
       .sort((left, right) => tileKey(left) - tileKey(right)),
+    walls: (snapshot.walls ?? [])
+      .map((wall) => ({ ...wall }))
+      .sort((left, right) => tileKey(left) - tileKey(right)),
+    clearedVegetation: (snapshot.clearedVegetation ?? [])
+      .map((tile) => ({ ...tile }))
+      .sort((left, right) => tileKey(left) - tileKey(right)),
     households: snapshot.households
-      .map((household) => ({ ...household }))
+      .map(normalizeHouseholdLivelihood)
+      .sort((left, right) => left.houseId - right.houseId),
+    householdFoodOrders: (snapshot.householdFoodOrders ?? [])
+      .map((order) => ({ ...order }))
       .sort((left, right) => left.houseId - right.houseId),
     migrants: snapshot.migrants
       .map((migrant) => ({ ...migrant }))
@@ -625,7 +782,10 @@ export function hydrateWorld(snapshot: WorldSnapshot): WorldState {
         }
       : { relation: 0, tradeOpen: false, envoys: [] },
     economy: snapshot.economy
-      ? { ...snapshot.economy }
+      ? {
+          ...snapshot.economy,
+          foodOrderEscrow: snapshot.economy.foodOrderEscrow ?? 0,
+        }
       : {
           treasury: 500,
           taxRate: "standard",
@@ -634,6 +794,7 @@ export function hydrateWorld(snapshot: WorldSnapshot): WorldState {
           taxableHouses: 0,
           sentiment: 50,
           lastTradeRevenue: 0,
+          foodOrderEscrow: 0,
         },
   };
 }
@@ -644,9 +805,15 @@ function cloneWorldState(world: WorldState): WorldState {
     tick: world.tick,
     revision: world.revision,
     nextEntityId: world.nextEntityId,
+    terrain: { ...world.terrain },
     buildings: world.buildings.map(cloneBuilding),
     roads: world.roads.map((road) => ({ ...road })),
-    households: world.households.map((household) => ({ ...household })),
+    walls: world.walls.map((wall) => ({ ...wall })),
+    clearedVegetation: world.clearedVegetation.map((tile) => ({ ...tile })),
+    households: world.households.map(normalizeHouseholdLivelihood),
+    householdFoodOrders: world.householdFoodOrders.map((order) => ({
+      ...order,
+    })),
     migrants: world.migrants.map((migrant) => ({ ...migrant })),
     performers: world.performers.map((performer) => ({ ...performer })),
     citizens: world.citizens.map((citizen) => ({ ...citizen })),
@@ -667,9 +834,13 @@ function commitWorldState(target: WorldState, source: WorldState): void {
   target.tick = source.tick;
   target.revision = source.revision;
   target.nextEntityId = source.nextEntityId;
+  target.terrain = source.terrain;
   target.buildings = source.buildings;
   target.roads = source.roads;
+  target.walls = source.walls;
+  target.clearedVegetation = source.clearedVegetation;
   target.households = source.households;
+  target.householdFoodOrders = source.householdFoodOrders;
   target.migrants = source.migrants;
   target.performers = source.performers;
   target.citizens = source.citizens;
@@ -684,7 +855,9 @@ function rejected(
   seq: number,
   reasonCode:
     | "occupied"
+    | "vegetation"
     | "out-of-bounds"
+    | "steep-slope"
     | "invalid-path"
     | "nothing-to-demolish"
     | "not-found"
@@ -718,8 +891,11 @@ function applyBuildCommand(
   const placement = evaluateBuildingPlacement(
     {
       map: { width: MAP_SIZE, height: MAP_SIZE },
+      terrain: world.terrain,
       buildings: world.buildings,
       roads: world.roads,
+      walls: world.walls,
+      clearedVegetation: world.clearedVegetation,
     },
     command.buildingTypeId,
     command.x,
@@ -766,6 +942,9 @@ function applyBuildCommand(
       footprint: { width: FARM_FOOTPRINT, height: FARM_FOOTPRINT },
       cropType: command.cropType ?? "millet",
       foodStock: 0,
+      operatingCash: FOOD_BUSINESS_STARTING_CASH,
+      wageArrears: 0,
+      staffedWorkers: 0,
     };
   } else if (command.buildingTypeId === "granary") {
     building = {
@@ -777,6 +956,9 @@ function applyBuildCommand(
       footprint: { width: GRANARY_FOOTPRINT, height: GRANARY_FOOTPRINT },
       foodStock: 0,
       foodStocks: emptyFoodStocks(),
+      operatingCash: FOOD_BUSINESS_STARTING_CASH,
+      wageArrears: 0,
+      staffedWorkers: 0,
     };
   } else if (command.buildingTypeId === "market") {
     building = {
@@ -789,6 +971,9 @@ function applyBuildCommand(
       foodStock: 0,
       foodStocks: emptyFoodStocks(),
       clothingStock: 0,
+      operatingCash: FOOD_BUSINESS_STARTING_CASH,
+      wageArrears: 0,
+      staffedWorkers: 0,
     };
   } else if (command.buildingTypeId === "hemp-farm") {
     building = {
@@ -894,19 +1079,36 @@ function applyRoadPathCommand(
   if (command.tiles.length === 0) {
     return rejected(world, command.seq, "invalid-path");
   }
+  if (
+    command.tiles.some(
+      (tile) =>
+        !Number.isSafeInteger(tile.x) ||
+        !Number.isSafeInteger(tile.y) ||
+        !isTileInsideTerrain(tile, world.terrain),
+    )
+  ) {
+    return rejected(world, command.seq, "out-of-bounds");
+  }
   const pathKeys = new Set<number>();
   const existingRoadKeys = new Set(world.roads.map(tileKey));
+  const existingWallKeys = new Set(world.walls.map(tileKey));
   for (let index = 0; index < command.tiles.length; index += 1) {
     const tile = command.tiles[index];
     if (
       !Number.isSafeInteger(tile.x) ||
       !Number.isSafeInteger(tile.y) ||
-      tile.x < 0 ||
-      tile.y < 0 ||
-      tile.x >= MAP_SIZE ||
-      tile.y >= MAP_SIZE
+      !isTileInsideTerrain(tile, world.terrain)
     ) {
       return rejected(world, command.seq, "out-of-bounds");
+    }
+    if (
+      hasVegetationObstacle(
+        { terrain: world.terrain, clearedVegetation: world.clearedVegetation },
+        tile.x,
+        tile.y,
+      )
+    ) {
+      return rejected(world, command.seq, "vegetation");
     }
     const key = tileKey(tile);
     if (pathKeys.has(key)) return rejected(world, command.seq, "invalid-path");
@@ -920,6 +1122,7 @@ function applyRoadPathCommand(
     }
     if (
       existingRoadKeys.has(key) ||
+      existingWallKeys.has(key) ||
       world.buildings.some((building) => tileInsideBuilding(tile, building))
     ) {
       return rejected(world, command.seq, "occupied");
@@ -934,16 +1137,80 @@ function applyRoadPathCommand(
   return accepted(world, command.seq);
 }
 
+function applyWallPathCommand(
+  world: WorldState,
+  command: Extract<GameCommand, { type: "build-wall-path" }>,
+): CommandApplication {
+  if (command.tiles.length === 0) {
+    return rejected(world, command.seq, "invalid-path");
+  }
+  if (
+    command.tiles.some(
+      (tile) =>
+        !Number.isSafeInteger(tile.x) ||
+        !Number.isSafeInteger(tile.y) ||
+        !isInsideMap(tile),
+    )
+  ) {
+    return rejected(world, command.seq, "out-of-bounds");
+  }
+  const pathKeys = new Set<number>();
+  const existingRoadKeys = new Set(world.roads.map(tileKey));
+  const existingWallKeys = new Set(world.walls.map(tileKey));
+  for (let index = 0; index < command.tiles.length; index += 1) {
+    const tile = command.tiles[index];
+    if (
+      !Number.isSafeInteger(tile.x) ||
+      !Number.isSafeInteger(tile.y) ||
+      !isInsideMap(tile)
+    ) {
+      return rejected(world, command.seq, "out-of-bounds");
+    }
+    if (!isTerrainTileBuildable(tile, world.terrain)) {
+      return rejected(world, command.seq, "steep-slope");
+    }
+    if (
+      hasVegetationObstacle(
+        { terrain: world.terrain, clearedVegetation: world.clearedVegetation },
+        tile.x,
+        tile.y,
+      )
+    ) {
+      return rejected(world, command.seq, "vegetation");
+    }
+    const key = tileKey(tile);
+    if (pathKeys.has(key)) return rejected(world, command.seq, "invalid-path");
+    pathKeys.add(key);
+    const previous = command.tiles[index - 1];
+    if (
+      previous &&
+      Math.abs(tile.x - previous.x) + Math.abs(tile.y - previous.y) !== 1
+    ) {
+      return rejected(world, command.seq, "invalid-path");
+    }
+    if (
+      (tile.x === CITY_GATE_TILE.x && tile.y === CITY_GATE_TILE.y) ||
+      existingRoadKeys.has(key) ||
+      existingWallKeys.has(key) ||
+      world.buildings.some((building) => tileInsideBuilding(tile, building))
+    ) {
+      return rejected(world, command.seq, "occupied");
+    }
+  }
+  if (world.revision === Number.MAX_SAFE_INTEGER) {
+    return rejected(world, command.seq, "counter-exhausted");
+  }
+  world.walls.push(...command.tiles.map((tile) => ({ ...tile })));
+  world.walls.sort((left, right) => tileKey(left) - tileKey(right));
+  world.revision += 1;
+  return accepted(world, command.seq);
+}
+
 function applyDemolishCommand(
   world: WorldState,
   command: Extract<GameCommand, { type: "demolish" }>,
 ): CommandApplication {
-  if (
-    command.x < 0 ||
-    command.y < 0 ||
-    command.x >= MAP_SIZE ||
-    command.y >= MAP_SIZE
-  ) {
+  if (!isTileInsideTerrain({ x: command.x, y: command.y }, world.terrain)) {
     return rejected(world, command.seq, "out-of-bounds");
   }
   const roadIndex = world.roads.findIndex(
@@ -958,11 +1225,39 @@ function applyDemolishCommand(
     world.revision += 1;
     return accepted(world, command.seq);
   }
+  const wallIndex = world.walls.findIndex(
+    (wall) => wall.x === command.x && wall.y === command.y,
+  );
+  if (wallIndex >= 0) {
+    if (world.revision === Number.MAX_SAFE_INTEGER) {
+      return rejected(world, command.seq, "counter-exhausted");
+    }
+    world.walls.splice(wallIndex, 1);
+    world.revision += 1;
+    return accepted(world, command.seq);
+  }
   const tile = { x: command.x, y: command.y };
   const buildingIndex = world.buildings.findIndex((building) =>
     tileInsideBuilding(tile, building),
   );
   if (buildingIndex < 0) {
+    if (
+      hasVegetationObstacle(
+        { terrain: world.terrain, clearedVegetation: world.clearedVegetation },
+        command.x,
+        command.y,
+      )
+    ) {
+      if (world.revision === Number.MAX_SAFE_INTEGER) {
+        return rejected(world, command.seq, "counter-exhausted");
+      }
+      world.clearedVegetation.push(tile);
+      world.clearedVegetation.sort(
+        (left, right) => tileKey(left) - tileKey(right),
+      );
+      world.revision += 1;
+      return accepted(world, command.seq);
+    }
     return rejected(world, command.seq, "nothing-to-demolish");
   }
   if (world.revision === Number.MAX_SAFE_INTEGER) {
@@ -1011,6 +1306,9 @@ export function applyCommand(
   if (command.type === "build") return applyBuildCommand(world, command);
   if (command.type === "build-road-path") {
     return applyRoadPathCommand(world, command);
+  }
+  if (command.type === "build-wall-path") {
+    return applyWallPathCommand(world, command);
   }
   if (command.type === "demolish") {
     return applyDemolishCommand(world, command);
@@ -1149,6 +1447,12 @@ export function applyCommand(
     world.revision += 1;
     return accepted(world, command.seq);
   }
+  if (command.type === "advance-activity") {
+    if (!advanceActivityPulsesAtomically(world, command.pulses)) {
+      return rejected(world, command.seq, "counter-exhausted");
+    }
+    return accepted(world, command.seq);
+  }
   if (!advanceTicksAtomically(world, command.ticks)) {
     return rejected(world, command.seq, "counter-exhausted");
   }
@@ -1184,10 +1488,7 @@ function footprintBorderTiles(building: BuildingView): TileCoordinate[] {
       },
     );
   }
-  return tiles.filter(
-    (tile) =>
-      tile.x >= 0 && tile.y >= 0 && tile.x < MAP_SIZE && tile.y < MAP_SIZE,
-  );
+  return tiles.filter((tile) => isInsideMap(tile));
 }
 
 function connectedRoadKeys(roads: TileCoordinate[]): Set<number> {
@@ -1252,6 +1553,48 @@ function shortestRoadPathToHouse(
     }
   }
   if (destinationKey === null) return null;
+
+  const reversedPath: TileCoordinate[] = [];
+  let cursor: number | null = destinationKey;
+  while (cursor !== null) {
+    const tile = roadByKey.get(cursor);
+    if (!tile) return null;
+    reversedPath.push({ ...tile });
+    cursor = previous.get(cursor) ?? null;
+  }
+  return reversedPath.reverse();
+}
+
+function shortestRoadPath(
+  world: Pick<WorldState, "roads">,
+  start: TileCoordinate,
+  destination: TileCoordinate,
+): TileCoordinate[] | null {
+  const roadByKey = new Map(world.roads.map((road) => [tileKey(road), road]));
+  const startKey = tileKey(start);
+  const destinationKey = tileKey(destination);
+  if (!roadByKey.has(startKey) || !roadByKey.has(destinationKey)) return null;
+
+  const queue = [startKey];
+  const previous = new Map<number, number | null>([[startKey, null]]);
+  let head = 0;
+  while (head < queue.length && !previous.has(destinationKey)) {
+    const key = queue[head];
+    head += 1;
+    const tile = roadByKey.get(key);
+    if (!tile) continue;
+    const neighbors = orthogonalNeighbors(tile)
+      .filter(isInsideMap)
+      .map(tileKey)
+      .filter((neighborKey) => roadByKey.has(neighborKey))
+      .sort((left, right) => left - right);
+    for (const neighborKey of neighbors) {
+      if (previous.has(neighborKey)) continue;
+      previous.set(neighborKey, key);
+      queue.push(neighborKey);
+    }
+  }
+  if (!previous.has(destinationKey)) return null;
 
   const reversedPath: TileCoordinate[] = [];
   let cursor: number | null = destinationKey;
@@ -1343,6 +1686,84 @@ function shortestRoadDistance(
   return null;
 }
 
+type FoodBusiness = FarmBuildingView | GranaryBuildingView | MarketBuildingView;
+
+function settleFoodBusinessWages(world: WorldState, workers: number): void {
+  if (workers <= 0) return;
+  const allocations = allocateHouseholdWorkers(
+    world.households,
+    workers,
+    world.laborPolicy.wageLevel,
+  );
+  const byHouse = new Map(allocations.map((entry) => [entry.houseId, entry]));
+  for (const household of world.households) {
+    const employed = byHouse.get(household.houseId)?.employedWorkers ?? 0;
+    if (employed <= 0) continue;
+    const income = employed * WAGE_RATE[world.laborPolicy.wageLevel];
+    household.cash = (household.cash ?? HOUSEHOLD_STARTING_CASH) + income;
+    household.employedWorkers = (household.employedWorkers ?? 0) + employed;
+    household.lastIncome = (household.lastIncome ?? 0) + income;
+    household.livelihoodLedger = addLivelihoodLedgerEntry(
+      householdLedger(household),
+      {
+        tick: world.tick,
+        kind: "wage",
+        amount: income,
+        balanceAfter: household.cash,
+      },
+    );
+  }
+}
+
+function reconcileFoodBusinessStaffing(world: WorldState): void {
+  const labor = calculateLaborReport(
+    {
+      tick: world.tick,
+      buildings: world.buildings,
+      households: world.households,
+    },
+    world.laborPolicy,
+  );
+  let agriculturalWorkers = labor.assigned.agriculture;
+  let commerceWorkers = labor.assigned.commerce;
+  let paidWorkers = 0;
+  const businesses = world.buildings
+    .filter(
+      (building): building is FoodBusiness =>
+        isFarm(building) || isGranary(building) || isMarket(building),
+    )
+    .sort((left, right) => left.id - right.id);
+
+  for (const business of businesses) {
+    const agricultural =
+      isFarm(business) &&
+      cropPhaseAtTick(business.cropType, world.tick) !== "dormant";
+    const demand = isFarm(business) ? (agricultural ? 2 : 0) : 1;
+    const available = agricultural ? agriculturalWorkers : commerceWorkers;
+    const due = demand * WAGE_RATE[world.laborPolicy.wageLevel];
+    business.staffedWorkers = 0;
+    if (demand === 0) continue;
+    if (available < demand) continue;
+    if ((business.operatingCash ?? 0) < due) {
+      business.wageArrears = (business.wageArrears ?? 0) + due;
+      continue;
+    }
+    business.operatingCash = (business.operatingCash ?? 0) - due;
+    business.staffedWorkers = demand;
+    paidWorkers += demand;
+    if (agricultural) agriculturalWorkers -= demand;
+    else commerceWorkers -= demand;
+  }
+  settleFoodBusinessWages(world, paidWorkers);
+}
+
+function foodBusinessOperational(
+  building: FoodBusiness,
+  workers: number,
+): boolean {
+  return (building.staffedWorkers ?? 0) >= workers;
+}
+
 function reconcileFoodProductionAndTransport(world: WorldState): void {
   const farms = world.buildings
     .filter(isFarm)
@@ -1359,7 +1780,8 @@ function reconcileFoodProductionAndTransport(world: WorldState): void {
     for (const farm of farms) {
       if (
         cropPhaseAtTick(farm.cropType, world.tick) === "harvest" &&
-        farm.foodStock < FARM_STOCK_CAPACITY
+        farm.foodStock < FARM_STOCK_CAPACITY &&
+        foodBusinessOperational(farm, 2)
       ) {
         farm.foodStock = Math.min(
           FARM_STOCK_CAPACITY,
@@ -1370,11 +1792,18 @@ function reconcileFoodProductionAndTransport(world: WorldState): void {
   }
 
   for (const granary of granaries) {
-    if (granary.foodStock >= GRANARY_STOCK_CAPACITY) continue;
+    if (
+      granary.foodStock >= GRANARY_STOCK_CAPACITY ||
+      !foodBusinessOperational(granary, 1) ||
+      (granary.operatingCash ?? 0) < HOUSEHOLD_FOOD_PRICE
+    ) {
+      continue;
+    }
     const candidates = farms
       .filter(
         (farm) =>
           farm.foodStock > 0 &&
+          foodBusinessOperational(farm, 2) &&
           (granary.acceptedCrops ?? CROP_TYPES).includes(farm.cropType),
       )
       .map((farm) => ({
@@ -1401,6 +1830,8 @@ function reconcileFoodProductionAndTransport(world: WorldState): void {
     source.foodStock -= 1;
     granary.foodStock += 1;
     granary.foodStocks[source.cropType] += 1;
+    granary.operatingCash = (granary.operatingCash ?? 0) - HOUSEHOLD_FOOD_PRICE;
+    source.operatingCash = (source.operatingCash ?? 0) + HOUSEHOLD_FOOD_PRICE;
   }
 }
 
@@ -1426,9 +1857,18 @@ function reconcileMarketRestocking(world: WorldState): void {
     .sort((left, right) => left.id - right.id);
 
   for (const market of markets) {
-    if (market.foodStock >= MARKET_STOCK_CAPACITY) continue;
+    if (
+      market.foodStock >= MARKET_STOCK_CAPACITY ||
+      !foodBusinessOperational(market, 1) ||
+      (market.operatingCash ?? 0) < HOUSEHOLD_FOOD_PRICE
+    ) {
+      continue;
+    }
     const candidates = granaries
-      .filter((granary) => granary.foodStock > 0)
+      .filter(
+        (granary) =>
+          granary.foodStock > 0 && foodBusinessOperational(granary, 1),
+      )
       .map((granary) => ({
         granary,
         distance: shortestRoadDistance(
@@ -1456,6 +1896,8 @@ function reconcileMarketRestocking(world: WorldState): void {
     source.foodStocks[cropType] -= 1;
     market.foodStock += 1;
     market.foodStocks[cropType] += 1;
+    market.operatingCash = (market.operatingCash ?? 0) - HOUSEHOLD_FOOD_PRICE;
+    source.operatingCash = (source.operatingCash ?? 0) + HOUSEHOLD_FOOD_PRICE;
   }
 }
 
@@ -1622,72 +2064,308 @@ function consumeHouseholdFood(
   existingHouseholds: Map<number, HouseholdView>,
 ): void {
   for (const household of existingHouseholds.values()) {
-    if (household.foodReserveTicks > 0) {
-      household.foodReserveTicks = (household.foodReserveTicks -
-        1) as HouseholdView["foodReserveTicks"];
-      if (household.foodReserveTicks === 0) household.foodQuality = "none";
-    }
+    const units =
+      household.foodReserveUnits ??
+      householdFoodNeed(household) * household.foodReserveTicks;
+    household.foodReserveUnits = Math.max(
+      0,
+      units - householdFoodNeed(household),
+    );
+    household.foodReserveTicks = householdFoodMonths({
+      residents: household.residents,
+      foodReserveUnits: household.foodReserveUnits,
+    });
+    if (household.foodReserveUnits === 0) household.foodQuality = "none";
   }
 }
 
-function reconcileMarketDistribution(
+const FOOD_DELIVERY_TILES_PER_TICK = 4;
+
+function householdLedger(household: HouseholdView): LivelihoodLedgerEntry[] {
+  return (household.livelihoodLedger ?? []).map((entry) => ({ ...entry }));
+}
+
+function processHouseholdFoodDeliveries(
   world: WorldState,
   existingHouseholds: Map<number, HouseholdView>,
 ): void {
   const housesById = new Map(
     world.buildings.filter(isHouse).map((house) => [house.id, house]),
   );
-  const markets = world.buildings
-    .filter(isMarket)
-    .sort((left, right) => left.id - right.id);
+  const marketsById = new Map(
+    world.buildings.filter(isMarket).map((market) => [market.id, market]),
+  );
+  const pending: HouseholdFoodOrderView[] = [];
 
-  for (const market of markets) {
-    if (market.foodStock <= 0) continue;
-    const candidates = [...existingHouseholds.values()]
-      .filter((household) => household.foodReserveTicks === 0)
-      .map((household) => {
-        const house = housesById.get(household.houseId);
-        return house
-          ? {
-              household,
+  for (const order of [...world.householdFoodOrders].sort(
+    (left, right) => left.houseId - right.houseId,
+  )) {
+    const quantity = order.quantity ?? 1;
+    if (order.arrivesAtTick > world.tick) {
+      pending.push(order);
+      continue;
+    }
+    const household = existingHouseholds.get(order.houseId);
+    const house = housesById.get(order.houseId);
+    const market = marketsById.get(order.marketId);
+    const distance =
+      house && market
+        ? shortestRoadDistance(world, market, house, MARKET_SERVICE_RANGE)
+        : null;
+    world.economy.foodOrderEscrow = Math.max(
+      0,
+      (world.economy.foodOrderEscrow ?? 0) - order.price,
+    );
+    if (household && house && market && distance !== null) {
+      household.foodReserveUnits = Math.min(
+        householdFoodTarget(household),
+        (household.foodReserveUnits ?? 0) + quantity,
+      );
+      household.foodReserveTicks = householdFoodMonths({
+        residents: household.residents,
+        foodReserveUnits: household.foodReserveUnits,
+      });
+      household.foodQuality = order.foodQuality;
+      household.foodShortageReason = "none";
+      household.livelihoodLedger = addLivelihoodLedgerEntry(
+        householdLedger(household),
+        {
+          tick: world.tick,
+          kind: "food-delivery",
+          amount: 0,
+          balanceAfter: household.cash ?? HOUSEHOLD_STARTING_CASH,
+        },
+      );
+      continue;
+    }
+    if (household) {
+      household.cash =
+        (household.cash ?? HOUSEHOLD_STARTING_CASH) + order.price;
+      household.foodShortageReason = market ? "disconnected" : "no-market";
+      household.livelihoodLedger = addLivelihoodLedgerEntry(
+        householdLedger(household),
+        {
+          tick: world.tick,
+          kind: "food-refund",
+          amount: order.price,
+          balanceAfter: household.cash,
+        },
+      );
+      if (market) {
+        market.operatingCash = Math.max(
+          0,
+          (market.operatingCash ?? 0) - order.price,
+        );
+      }
+    }
+    if (market && market.foodStock < MARKET_STOCK_CAPACITY) {
+      market.foodStock = Math.min(
+        MARKET_STOCK_CAPACITY,
+        market.foodStock + quantity,
+      ) as MarketBuildingView["foodStock"];
+      market.foodStocks[order.cropType] += quantity;
+    }
+  }
+  world.householdFoodOrders = pending;
+}
+
+function reconcileHouseholdFoodOrders(
+  world: WorldState,
+  households: Map<number, HouseholdView>,
+): void {
+  const housesById = new Map(
+    world.buildings.filter(isHouse).map((house) => [house.id, house]),
+  );
+  const markets = world.buildings.filter(isMarket).sort((a, b) => a.id - b.id);
+  const orderedHouseholds = new Set(
+    world.householdFoodOrders.map((order) => order.houseId),
+  );
+  const usedMarketIds = new Set<number>();
+
+  for (const household of [...households.values()].sort(
+    (left, right) => left.houseId - right.houseId,
+  )) {
+    household.lastFoodExpense = 0;
+    if (orderedHouseholds.has(household.houseId)) {
+      household.foodShortageReason =
+        household.foodReserveTicks === 0 ? "delivery-pending" : "none";
+      continue;
+    }
+    const foodReserveUnits =
+      household.foodReserveUnits ??
+      householdFoodNeed(household) * household.foodReserveTicks;
+    if (foodReserveUnits > householdFoodNeed(household)) {
+      household.foodShortageReason = "none";
+      continue;
+    }
+    if (markets.length === 0) {
+      household.foodShortageReason =
+        household.foodReserveTicks === 0 ? "no-market" : "none";
+      continue;
+    }
+    const house = housesById.get(household.houseId);
+    const reachable = house
+      ? markets
+          .map((market) => ({
+            market,
+            distance: shortestRoadDistance(
+              world,
+              market,
               house,
-              distance: shortestRoadDistance(
-                world,
-                market,
-                house,
-                MARKET_SERVICE_RANGE,
-              ),
-            }
-          : null;
-      })
+              MARKET_SERVICE_RANGE,
+            ),
+          }))
+          .filter(
+            (
+              candidate,
+            ): candidate is { market: MarketBuildingView; distance: number } =>
+              candidate.distance !== null,
+          )
+          .sort(
+            (left, right) =>
+              left.distance - right.distance ||
+              left.market.id - right.market.id,
+          )
+      : [];
+    if (reachable.length === 0) {
+      household.foodShortageReason =
+        household.foodReserveTicks === 0 ? "disconnected" : "none";
+      continue;
+    }
+    const stocked = reachable.find(
+      ({ market }) =>
+        !usedMarketIds.has(market.id) &&
+        market.foodStock > 0 &&
+        CROP_TYPES.some((cropType) => market.foodStocks[cropType] > 0),
+    );
+    if (!stocked) {
+      household.foodShortageReason =
+        household.foodReserveTicks === 0 ? "out-of-stock" : "none";
+      continue;
+    }
+    const cash = household.cash ?? HOUSEHOLD_STARTING_CASH;
+    const deliveryTicks = Math.max(
+      1,
+      Math.ceil(stocked.distance / FOOD_DELIVERY_TILES_PER_TICK),
+    );
+    const projectedReserve = Math.max(
+      0,
+      foodReserveUnits - householdFoodNeed(household) * deliveryTicks,
+    );
+    const quantity = householdFoodTarget(household) - projectedReserve;
+    const price = quantity * HOUSEHOLD_FOOD_PRICE;
+    if (stocked.market.foodStock < quantity) {
+      household.foodShortageReason =
+        household.foodReserveTicks === 0 ? "out-of-stock" : "none";
+      continue;
+    }
+    if (cash < price) {
+      household.foodShortageReason =
+        household.foodReserveTicks === 0 ? "unaffordable" : "none";
+      continue;
+    }
+    const cropType = CROP_TYPES.filter(
+      (candidate) => stocked.market.foodStocks[candidate] >= quantity,
+    ).sort(
+      (left, right) =>
+        stocked.market.foodStocks[right] - stocked.market.foodStocks[left] ||
+        CROP_TYPES.indexOf(left) - CROP_TYPES.indexOf(right),
+    )[0];
+    if (!cropType) {
+      household.foodShortageReason =
+        household.foodReserveTicks === 0 ? "out-of-stock" : "none";
+      continue;
+    }
+    const foodQuality = foodQualityForStocks(stocked.market.foodStocks);
+    household.cash = cash - price;
+    household.lastFoodExpense = price;
+    household.foodShortageReason =
+      household.foodReserveTicks === 0 ? "delivery-pending" : "none";
+    household.livelihoodLedger = addLivelihoodLedgerEntry(
+      householdLedger(household),
+      {
+        tick: world.tick,
+        kind: "food-order",
+        amount: -price,
+        balanceAfter: household.cash,
+      },
+    );
+    stocked.market.foodStock = (stocked.market.foodStock -
+      quantity) as MarketBuildingView["foodStock"];
+    stocked.market.foodStocks[cropType] -= quantity;
+    stocked.market.operatingCash = (stocked.market.operatingCash ?? 0) + price;
+    world.economy.foodOrderEscrow =
+      (world.economy.foodOrderEscrow ?? 0) + price;
+    world.householdFoodOrders.push({
+      houseId: household.houseId,
+      marketId: stocked.market.id,
+      cropType,
+      foodQuality,
+      quantity,
+      price,
+      placedAtTick: world.tick,
+      arrivesAtTick: world.tick + deliveryTicks,
+    });
+    usedMarketIds.add(stocked.market.id);
+  }
+  world.householdFoodOrders.sort((left, right) => left.houseId - right.houseId);
+}
+
+function reconcileEmergencyGranaryCollection(
+  world: WorldState,
+  existingHouseholds: Map<number, HouseholdView>,
+): void {
+  const housesById = new Map(
+    world.buildings.filter(isHouse).map((house) => [house.id, house]),
+  );
+  const granaries = world.buildings
+    .filter(isGranary)
+    .sort((left, right) => left.id - right.id);
+  const usedGranaries = new Set<number>();
+
+  for (const household of [...existingHouseholds.values()].sort(
+    (left, right) => left.houseId - right.houseId,
+  )) {
+    if (household.foodReserveTicks > 0) continue;
+    const house = housesById.get(household.houseId);
+    if (!house) continue;
+    const source = granaries
+      .filter(
+        (granary) => granary.foodStock > 0 && !usedGranaries.has(granary.id),
+      )
+      .map((granary) => ({
+        granary,
+        distance: shortestRoadDistance(
+          world,
+          house,
+          granary,
+          MAP_SIZE * MAP_SIZE,
+        ),
+      }))
       .filter(
         (
           candidate,
-        ): candidate is {
-          household: HouseholdView;
-          house: HouseBuildingView;
-          distance: number;
-        } => candidate !== null && candidate.distance !== null,
+        ): candidate is { granary: GranaryBuildingView; distance: number } =>
+          candidate.distance !== null,
       )
       .sort(
         (left, right) =>
-          left.distance - right.distance || left.house.id - right.house.id,
-      );
-    const target = candidates[0]?.household;
-    if (!target) continue;
-    const deliveredQuality = foodQualityForStocks(market.foodStocks);
+          left.distance - right.distance || left.granary.id - right.granary.id,
+      )[0]?.granary;
+    if (!source) continue;
     const cropType = CROP_TYPES.filter(
-      (candidate) => market.foodStocks[candidate] > 0,
+      (candidate) => source.foodStocks[candidate] > 0,
     ).sort(
       (left, right) =>
-        market.foodStocks[right] - market.foodStocks[left] ||
+        source.foodStocks[right] - source.foodStocks[left] ||
         CROP_TYPES.indexOf(left) - CROP_TYPES.indexOf(right),
     )[0];
     if (!cropType) continue;
-    market.foodStock -= 1;
-    market.foodStocks[cropType] -= 1;
-    target.foodReserveTicks = HOUSEHOLD_FOOD_RESERVE_MAX;
-    target.foodQuality = deliveredQuality;
+    source.foodStock -= 1;
+    source.foodStocks[cropType] -= 1;
+    household.foodReserveTicks = HOUSEHOLD_FOOD_RESERVE_MAX;
+    household.foodQuality = "bland";
+    usedGranaries.add(source.id);
   }
 }
 
@@ -1765,7 +2443,8 @@ function houseHasWaterService(
 }
 
 function stabilizeAfterInfrastructureRemoval(world: WorldState): void {
-  const connected = connectedRoadKeys(world.roads);
+  const gateConnected = connectedRoadKeys(world.roads);
+  const localRoadKeys = new Set(world.roads.map(tileKey));
   const waterDistances = waterRoadDistances(world);
   const housesById = new Map(
     world.buildings.filter(isHouse).map((house) => [house.id, house]),
@@ -1775,7 +2454,7 @@ function stabilizeAfterInfrastructureRemoval(world: WorldState): void {
     const house = housesById.get(migrant.houseId);
     return (
       house !== undefined &&
-      connected.has(tileKey(migrant)) &&
+      gateConnected.has(tileKey(migrant)) &&
       shortestRoadPathToHouse(world, migrant, house) !== null
     );
   });
@@ -1789,7 +2468,7 @@ function stabilizeAfterInfrastructureRemoval(world: WorldState): void {
       continue;
     }
     const household = householdsByHouse.get(house.id);
-    if (!household || !houseHasRoadService(house, connected)) {
+    if (!household || !houseHasRoadService(house, localRoadKeys)) {
       house.level = 1;
       continue;
     }
@@ -1812,13 +2491,12 @@ function stabilizeAfterInfrastructureRemoval(world: WorldState): void {
   world.households = nextHouseholds.sort(
     (left, right) => left.houseId - right.houseId,
   );
-  const roadKeys = new Set(world.roads.map(tileKey));
   for (const citizen of world.citizens) {
-    if (roadKeys.has(tileKey(citizen))) continue;
+    if (localRoadKeys.has(tileKey(citizen))) continue;
     const home = housesById.get(citizen.houseId);
     const homeRoad = home
       ? footprintBorderTiles(home)
-          .filter((tile) => connected.has(tileKey(tile)))
+          .filter((tile) => localRoadKeys.has(tileKey(tile)))
           .sort((left, right) => tileKey(left) - tileKey(right))[0]
       : undefined;
     if (!homeRoad) continue;
@@ -1864,24 +2542,7 @@ function reconcileConstruction(
       continue;
     }
 
-    if (migrant.state === "walking") {
-      const path = shortestRoadPathToHouse(world, migrant, house);
-      if (!path) {
-        world.migrants = world.migrants.filter(
-          (candidate) => candidate.houseId !== house.id,
-        );
-        migrantsByHouse.delete(house.id);
-        continue;
-      }
-      if (path.length === 1) {
-        migrant.state = "building";
-        house.constructionStage = 1;
-      } else {
-        migrant.x = path[1].x;
-        migrant.y = path[1].y;
-      }
-      continue;
-    }
+    if (migrant.state === "walking") continue;
 
     house.constructionStage = (house.constructionStage +
       1) as HouseBuildingView["constructionStage"];
@@ -1894,6 +2555,32 @@ function reconcileConstruction(
     );
   }
   world.migrants.sort((left, right) => left.houseId - right.houseId);
+}
+
+function advanceMigrants(world: WorldState): void {
+  const housesById = new Map(
+    world.buildings.filter(isHouse).map((house) => [house.id, house]),
+  );
+  const moving: MigrantView[] = [];
+  for (const migrant of world.migrants) {
+    if (migrant.state === "building") {
+      moving.push(migrant);
+      continue;
+    }
+    const house = housesById.get(migrant.houseId);
+    if (!house) continue;
+    const path = shortestRoadPathToHouse(world, migrant, house);
+    if (!path) continue;
+    if (path.length === 1) {
+      migrant.state = "building";
+      house.constructionStage = 1;
+    } else {
+      migrant.x = path[1].x;
+      migrant.y = path[1].y;
+    }
+    moving.push(migrant);
+  }
+  world.migrants = moving.sort((left, right) => left.houseId - right.houseId);
 }
 
 function laborSectorForBuilding(building: BuildingView): LaborSector | null {
@@ -1930,7 +2617,7 @@ function staffedVisualWorkplaces(world: WorldState): BuildingView[] {
     world.laborPolicy,
   );
   const remaining = { ...labor.assigned };
-  const connected = connectedRoadKeys(world.roads);
+  const localRoadKeys = new Set(world.roads.map(tileKey));
   const candidates: BuildingView[] = [];
   for (const building of [...world.buildings].sort(
     (left, right) => left.id - right.id,
@@ -1939,7 +2626,7 @@ function staffedVisualWorkplaces(world: WorldState): BuildingView[] {
     if (!sector || remaining[sector] <= 0) continue;
     if (
       !footprintBorderTiles(building).some((tile) =>
-        connected.has(tileKey(tile)),
+        localRoadKeys.has(tileKey(tile)),
       )
     ) {
       continue;
@@ -1954,15 +2641,15 @@ function homeRoadForCitizen(
   world: WorldState,
   house: HouseBuildingView,
 ): TileCoordinate | null {
-  const connected = connectedRoadKeys(world.roads);
+  const localRoadKeys = new Set(world.roads.map(tileKey));
   return (
     footprintBorderTiles(house)
-      .filter((tile) => connected.has(tileKey(tile)))
+      .filter((tile) => localRoadKeys.has(tileKey(tile)))
       .sort((left, right) => tileKey(left) - tileKey(right))[0] ?? null
   );
 }
 
-function reconcileCitizens(world: WorldState): void {
+function reconcileCitizens(world: WorldState, movePeople = true): void {
   const householdsByHouse = new Map(
     world.households.map((household) => [household.houseId, household]),
   );
@@ -1970,16 +2657,12 @@ function reconcileCitizens(world: WorldState): void {
     world.buildings.filter(isHouse).map((house) => [house.id, house]),
   );
   const workplaces = staffedVisualWorkplaces(world);
-  const workplacesById = new Map(
-    workplaces.map((building) => [building.id, building]),
-  );
   world.citizens = world.citizens.filter(
     (citizen) =>
       householdsByHouse.has(citizen.houseId) && housesById.has(citizen.houseId),
   );
 
   const represented = new Set(world.citizens.map((citizen) => citizen.houseId));
-  const newlyCreated = new Set<number>();
   for (const household of [...world.households].sort(
     (left, right) => left.houseId - right.houseId,
   )) {
@@ -1998,10 +2681,9 @@ function reconcileCitizens(world: WorldState): void {
       dwellTicks: 0,
     };
     world.citizens.push(citizen);
-    newlyCreated.add(citizen.id);
   }
 
-  const connected = connectedRoadKeys(world.roads);
+  const localRoadKeys = new Set(world.roads.map(tileKey));
   const allBuildingsById = new Map(
     world.buildings.map((building) => [building.id, building]),
   );
@@ -2013,7 +2695,7 @@ function reconcileCitizens(world: WorldState): void {
         building &&
         !isHouse(building) &&
         footprintBorderTiles(building).some((tile) =>
-          connected.has(tileKey(tile)),
+          localRoadKeys.has(tileKey(tile)),
         ) &&
         !occupiedWorkplaces.has(citizen.workplaceId)
       ) {
@@ -2039,8 +2721,12 @@ function reconcileCitizens(world: WorldState): void {
     occupiedWorkplaces.add(workplace.id);
   }
 
+  if (!movePeople) {
+    world.citizens.sort((left, right) => left.id - right.id);
+    return;
+  }
+
   for (const citizen of world.citizens) {
-    if (newlyCreated.has(citizen.id)) continue;
     const house = housesById.get(citizen.houseId);
     if (!house) continue;
     const workplace =
@@ -2063,7 +2749,7 @@ function reconcileCitizens(world: WorldState): void {
         }
         if (path.length <= 2) {
           citizen.state = "working";
-          citizen.dwellTicks = 1;
+          citizen.dwellTicks = 6;
           if (workplace) {
             citizen.x = workplace.x;
             citizen.y = workplace.y;
@@ -2077,7 +2763,7 @@ function reconcileCitizens(world: WorldState): void {
       if (!workplace) {
         citizen.state = "returning";
       } else if (citizen.dwellTicks > 0) {
-        citizen.dwellTicks = 0;
+        citizen.dwellTicks -= 1;
         continue;
       } else {
         const roadByKey = new Map(
@@ -2106,40 +2792,64 @@ function reconcileCitizens(world: WorldState): void {
         citizen.y = next.y;
       }
       if (path.length <= 2) {
-        if (citizen.workplaceId === null) {
-          citizen.state = "strolling";
-          citizen.dwellTicks = 0;
-        } else {
-          citizen.state = "resting";
-          citizen.dwellTicks = 1;
-        }
+        citizen.x = house.x;
+        citizen.y = house.y;
+        citizen.state = "resting";
+        citizen.dwellTicks = 3;
       }
       continue;
     }
 
     if (citizen.state === "resting") {
       if (citizen.dwellTicks > 0) {
-        citizen.dwellTicks = 0;
+        citizen.dwellTicks -= 1;
       } else {
+        const homeRoad = homeRoadForCitizen(world, house);
+        if (homeRoad) {
+          citizen.x = homeRoad.x;
+          citizen.y = homeRoad.y;
+        }
         citizen.state = citizen.workplaceId ? "commuting" : "strolling";
       }
       continue;
     }
 
     if (citizen.state === "strolling") {
-      const pathHome = shortestRoadPathToHouse(world, citizen, house);
-      if (pathHome && pathHome.length > 1) {
-        citizen.x = pathHome[1].x;
-        citizen.y = pathHome[1].y;
-        continue;
-      }
-      const roadKeys = new Set(world.roads.map(tileKey));
-      const step = orthogonalNeighbors(citizen)
-        .filter((tile) => roadKeys.has(tileKey(tile)))
-        .sort((left, right) => tileKey(left) - tileKey(right))[0];
-      if (step) {
-        citizen.x = step.x;
-        citizen.y = step.y;
+      const homeRoad = homeRoadForCitizen(world, house);
+      if (!homeRoad) continue;
+      if (citizen.dwellTicks < 3) {
+        const candidates = world.roads
+          .map((road) => ({
+            road,
+            path: shortestRoadPath(world, homeRoad, road),
+          }))
+          .filter(
+            (
+              candidate,
+            ): candidate is { road: TileCoordinate; path: TileCoordinate[] } =>
+              candidate.path !== null,
+          )
+          .sort(
+            (left, right) =>
+              right.path.length - left.path.length ||
+              tileKey(left.road) - tileKey(right.road),
+          );
+        const target = candidates[0]?.road;
+        const path = target ? shortestRoadPath(world, citizen, target) : null;
+        const next = path?.[1];
+        if (next) {
+          citizen.x = next.x;
+          citizen.y = next.y;
+        }
+        citizen.dwellTicks += 1;
+      } else {
+        const path = shortestRoadPathToHouse(world, citizen, house);
+        const next = path?.[1];
+        if (next) {
+          citizen.x = next.x;
+          citizen.y = next.y;
+        }
+        if (!path || path.length <= 2) citizen.dwellTicks = 0;
       }
     }
   }
@@ -2183,7 +2893,116 @@ function reconcileGovernmentEconomy(world: WorldState): void {
     taxRate: world.economy.taxRate,
     taxOfficeWorkers,
     taxOfficeDemand,
-    payroll: labor.payroll,
+    payroll:
+      labor.payroll -
+      world.buildings
+        .filter(
+          (building): building is FoodBusiness =>
+            isFarm(building) || isGranary(building) || isMarket(building),
+        )
+        .reduce(
+          (total, building) =>
+            total +
+            (building.staffedWorkers ?? 0) *
+              WAGE_RATE[world.laborPolicy.wageLevel],
+          0,
+        ),
+  });
+  const assignedWorkers = Object.values(labor.assigned).reduce(
+    (total, count) => total + count,
+    0,
+  );
+  const foodBusinessWorkers = world.buildings
+    .filter(
+      (building): building is FoodBusiness =>
+        isFarm(building) || isGranary(building) || isMarket(building),
+    )
+    .reduce((total, building) => total + (building.staffedWorkers ?? 0), 0);
+  const employment = new Map(
+    allocateHouseholdWorkers(
+      world.households,
+      Math.max(0, assignedWorkers - foodBusinessWorkers),
+      world.laborPolicy.wageLevel,
+    ).map((allocation) => [allocation.houseId, allocation.employedWorkers]),
+  );
+  const wageSettlement = settleHouseholdWages({
+    tick: world.tick,
+    treasury: world.economy.treasury,
+    escrow: 0,
+    wageLevel: world.laborPolicy.wageLevel,
+    households: world.households.map((household) => ({
+      ...household,
+      cash: household.cash ?? HOUSEHOLD_STARTING_CASH,
+      employedWorkers: employment.get(household.houseId) ?? 0,
+      lastIncome: household.lastIncome ?? 0,
+      wageArrears: household.wageArrears ?? 0,
+      ledger: householdLedger(household),
+    })),
+  });
+  world.households = wageSettlement.households.map(
+    ({ ledger, ...household }) => ({
+      ...household,
+      livelihoodLedger: ledger,
+    }),
+  );
+
+  const taxWeights = houses
+    .filter((house) => house.covered)
+    .sort((left, right) => left.houseId - right.houseId)
+    .map((house) => ({
+      houseId: house.houseId,
+      weight: house.level + (house.desirability >= 2 ? 1 : 0),
+    }));
+  const totalTaxWeight = taxWeights.reduce(
+    (total, house) => total + house.weight,
+    0,
+  );
+  const liabilities = new Map<number, number>();
+  let allocatedTax = 0;
+  for (const house of taxWeights) {
+    const due =
+      totalTaxWeight === 0
+        ? 0
+        : Math.floor((report.taxRevenue * house.weight) / totalTaxWeight);
+    liabilities.set(house.houseId, due);
+    allocatedTax += due;
+  }
+  let taxRemainder = report.taxRevenue - allocatedTax;
+  for (const house of taxWeights) {
+    if (taxRemainder <= 0) break;
+    liabilities.set(house.houseId, (liabilities.get(house.houseId) ?? 0) + 1);
+    taxRemainder -= 1;
+  }
+  let actualTaxRevenue = 0;
+  world.households = world.households.map((household) => {
+    const due = liabilities.get(household.houseId) ?? 0;
+    const cash = household.cash ?? HOUSEHOLD_STARTING_CASH;
+    const paid = Math.min(cash, due);
+    const unpaid = due - paid;
+    actualTaxRevenue += paid;
+    let ledger = householdLedger(household);
+    if (paid > 0) {
+      ledger = addLivelihoodLedgerEntry(ledger, {
+        tick: world.tick,
+        kind: "tax",
+        amount: -paid,
+        balanceAfter: cash - paid,
+      });
+    }
+    if (unpaid > 0) {
+      ledger = addLivelihoodLedgerEntry(ledger, {
+        tick: world.tick,
+        kind: "tax-arrears",
+        amount: 0,
+        balanceAfter: cash - paid,
+      });
+    }
+    return {
+      ...household,
+      cash: cash - paid,
+      taxArrears: (household.taxArrears ?? 0) + unpaid,
+      livelihoodLedger: ledger,
+    };
   });
   const sentiment = nextCitySentiment(world.economy.sentiment, {
     taxRate: world.economy.taxRate,
@@ -2195,9 +3014,9 @@ function reconcileGovernmentEconomy(world: WorldState): void {
   });
   world.economy = {
     ...world.economy,
-    treasury: nextTreasuryBalance(world.economy.treasury, report),
-    lastTaxRevenue: report.taxRevenue,
-    lastPayroll: report.payroll,
+    treasury: wageSettlement.treasury + actualTaxRevenue,
+    lastTaxRevenue: actualTaxRevenue,
+    lastPayroll: wageSettlement.paidPayroll,
     taxableHouses: report.taxableHouses,
     sentiment: sentiment.value,
   };
@@ -2313,21 +3132,6 @@ function reconcileEntertainment(world: WorldState): void {
   const markets = new Map(
     world.buildings.filter(isMarket).map((market) => [market.id, market]),
   );
-  const moving: PerformerView[] = [];
-  for (const performer of world.performers) {
-    if (!schools.has(performer.schoolId)) continue;
-    const market = markets.get(performer.targetMarketId);
-    if (!market) continue;
-    const path = shortestRoadPathToHouse(world, performer, market);
-    if (!path) continue;
-    const next = path[1] ?? path[0];
-    performer.x = next.x;
-    performer.y = next.y;
-    applyEntertainmentAtTile(world, next);
-    if (path.length > 1) moving.push(performer);
-  }
-  world.performers = moving;
-
   if (world.tick % 4 !== 0 || markets.size === 0) return;
   const labor = calculateLaborReport(
     {
@@ -2351,7 +3155,7 @@ function reconcileEntertainment(world: WorldState): void {
     0,
     labor.assigned.services - otherServiceDemand,
   );
-  const connected = connectedRoadKeys(world.roads);
+  const localRoadKeys = new Set(world.roads.map(tileKey));
   for (const school of [...schools.values()].sort((a, b) => a.id - b.id)) {
     if (staffedSchools <= 0) break;
     if (
@@ -2360,7 +3164,7 @@ function reconcileEntertainment(world: WorldState): void {
       continue;
     }
     const start = footprintBorderTiles(school)
-      .filter((tile) => connected.has(tileKey(tile)))
+      .filter((tile) => localRoadKeys.has(tileKey(tile)))
       .sort((a, b) => tileKey(a) - tileKey(b))[0];
     if (!start) continue;
     const target = [...markets.values()]
@@ -2395,8 +3199,34 @@ function reconcileEntertainment(world: WorldState): void {
   world.performers.sort((a, b) => a.schoolId - b.schoolId);
 }
 
+function advancePerformers(world: WorldState): void {
+  const schools = new Set(
+    world.buildings.filter(isMusicSchool).map((school) => school.id),
+  );
+  const markets = new Map(
+    world.buildings.filter(isMarket).map((market) => [market.id, market]),
+  );
+  const moving: PerformerView[] = [];
+  for (const performer of world.performers) {
+    if (!schools.has(performer.schoolId)) continue;
+    const market = markets.get(performer.targetMarketId);
+    if (!market) continue;
+    const path = shortestRoadPathToHouse(world, performer, market);
+    if (!path) continue;
+    const next = path[1] ?? path[0];
+    performer.x = next.x;
+    performer.y = next.y;
+    applyEntertainmentAtTile(world, next);
+    if (path.length > 1) moving.push(performer);
+  }
+  world.performers = moving.sort(
+    (left, right) => left.schoolId - right.schoolId,
+  );
+}
+
 function reconcileTick(world: WorldState): boolean {
-  const connected = connectedRoadKeys(world.roads);
+  const gateConnected = connectedRoadKeys(world.roads);
+  const localRoadKeys = new Set(world.roads.map(tileKey));
   const waterDistances = waterRoadDistances(world);
   const existingHouseholds = new Map(
     world.households.map((household) => [household.houseId, household]),
@@ -2424,6 +3254,7 @@ function reconcileTick(world: WorldState): boolean {
             : undefined,
       })),
     households: world.households,
+    householdFoodOrders: world.householdFoodOrders,
     industryStocks: world.buildings
       .filter(
         (building) =>
@@ -2459,6 +3290,7 @@ function reconcileTick(world: WorldState): boolean {
     performers: world.performers,
     citizens: world.citizens,
   });
+  reconcileFoodBusinessStaffing(world);
   reconcileFoodProductionAndTransport(world);
   reconcileMarketRestocking(world);
   reconcileHempIndustry(world);
@@ -2466,9 +3298,9 @@ function reconcileTick(world: WorldState): boolean {
   reconcileDiplomacy(world);
   reconcileTradeExports(world);
   consumeHouseholdFood(existingHouseholds);
-  reconcileMarketDistribution(world, existingHouseholds);
+  processHouseholdFoodDeliveries(world, existingHouseholds);
   reconcileClothingDistribution(world, existingHouseholds);
-  reconcileConstruction(world, connected);
+  reconcileConstruction(world, gateConnected);
   if (world.tick % 12 === 0 && world.shennongFavor > 0) {
     world.shennongFavor = (world.shennongFavor - 1) as 0 | 1 | 2;
   }
@@ -2479,7 +3311,7 @@ function reconcileTick(world: WorldState): boolean {
       continue;
     }
     const existing = existingHouseholds.get(house.id);
-    if (!houseHasRoadService(house, connected)) {
+    if (!houseHasRoadService(house, localRoadKeys)) {
       house.level = 1;
       continue;
     }
@@ -2489,7 +3321,25 @@ function reconcileTick(world: WorldState): boolean {
         houseId: house.id,
         residents: HOUSE_CAPACITY,
         foodReserveTicks: HOUSEHOLD_FOOD_RESERVE_MAX,
+        foodReserveUnits:
+          HOUSEHOLD_FOOD_RESERVE_MAX * FOOD_UNITS_PER_FIVE_RESIDENTS,
         foodQuality: "bland",
+        cash: HOUSEHOLD_STARTING_CASH,
+        employedWorkers: 0,
+        lastIncome: 0,
+        lastFoodExpense: 0,
+        wageArrears: 0,
+        taxArrears: 0,
+        foodShortageReason: "none",
+        livelihoodLedger: [
+          {
+            id: `${world.tick}:arrival-funds:0`,
+            tick: world.tick,
+            kind: "arrival-funds",
+            amount: HOUSEHOLD_STARTING_CASH,
+            balanceAfter: HOUSEHOLD_STARTING_CASH,
+          },
+        ],
       });
       continue;
     }
@@ -2499,24 +3349,24 @@ function reconcileTick(world: WorldState): boolean {
         ? 2
         : 1;
     nextHouseholds.push({
-      houseId: house.id,
+      ...normalizeHouseholdLivelihood(existing),
       residents: house.level === 2 ? UPGRADED_HOUSE_CAPACITY : HOUSE_CAPACITY,
       foodReserveTicks: existing.foodReserveTicks,
       foodQuality: existing.foodQuality,
-      ...(existing.clothingReserveTicks !== undefined
-        ? { clothingReserveTicks: existing.clothingReserveTicks }
-        : {}),
-      ...(existing.entertainmentReserveTicks !== undefined
-        ? { entertainmentReserveTicks: existing.entertainmentReserveTicks }
-        : {}),
     });
   }
   world.households = nextHouseholds.sort(
     (left, right) => left.houseId - right.houseId,
   );
-  reconcileCitizens(world);
+  reconcileCitizens(world, false);
   reconcileEntertainment(world);
   reconcileGovernmentEconomy(world);
+  reconcileHouseholdFoodOrders(
+    world,
+    new Map(
+      world.households.map((household) => [household.houseId, household]),
+    ),
+  );
   const after = JSON.stringify({
     shennongFavor: world.shennongFavor,
     diplomacy: world.diplomacy,
@@ -2540,6 +3390,7 @@ function reconcileTick(world: WorldState): boolean {
             : undefined,
       })),
     households: world.households,
+    householdFoodOrders: world.householdFoodOrders,
     industryStocks: world.buildings
       .filter(
         (building) =>
@@ -2587,6 +3438,54 @@ export function advanceTicks(world: WorldState, count: number): void {
   }
 }
 
+function reconcileActivityPulse(world: WorldState): boolean {
+  const before = JSON.stringify({
+    migrants: world.migrants,
+    performers: world.performers,
+    citizens: world.citizens,
+    construction: world.buildings
+      .filter(isHouse)
+      .map((house) => ({ id: house.id, stage: house.constructionStage })),
+    entertainment: world.households.map((household) => ({
+      id: household.houseId,
+      reserve: household.entertainmentReserveTicks,
+    })),
+  });
+  advanceMigrants(world);
+  reconcileCitizens(world);
+  advancePerformers(world);
+  const after = JSON.stringify({
+    migrants: world.migrants,
+    performers: world.performers,
+    citizens: world.citizens,
+    construction: world.buildings
+      .filter(isHouse)
+      .map((house) => ({ id: house.id, stage: house.constructionStage })),
+    entertainment: world.households.map((household) => ({
+      id: household.houseId,
+      reserve: household.entertainmentReserveTicks,
+    })),
+  });
+  return before !== after;
+}
+
+function advanceActivityPulsesAtomically(
+  world: WorldState,
+  count: number,
+): boolean {
+  if (!Number.isSafeInteger(count) || count < 1) {
+    throw new Error("人物活动节拍数必须是正安全整数");
+  }
+  const draft = cloneWorldState(world);
+  for (let index = 0; index < count; index += 1) {
+    if (!reconcileActivityPulse(draft)) continue;
+    if (draft.revision === Number.MAX_SAFE_INTEGER) return false;
+    draft.revision += 1;
+  }
+  commitWorldState(world, draft);
+  return true;
+}
+
 function advanceTicksAtomically(world: WorldState, count: number): boolean {
   if (!Number.isSafeInteger(count) || count < 1) {
     throw new Error("推进 tick 数必须是正安全整数");
@@ -2619,8 +3518,10 @@ export function snapshotWorld(world: WorldState): WorldSnapshot {
     world.laborPolicy.priorities.some(
       (sector, index) => sector !== DEFAULT_LABOR_POLICY.priorities[index],
     );
+  const { foodOrderEscrow, ...economyWithoutEscrow } = world.economy;
   return {
     map: { width: MAP_SIZE, height: MAP_SIZE },
+    terrain: { ...world.terrain },
     tick: world.tick,
     revision: world.revision,
     buildings: world.buildings
@@ -2629,9 +3530,26 @@ export function snapshotWorld(world: WorldState): WorldSnapshot {
     roads: world.roads
       .map((road) => ({ ...road }))
       .sort((left, right) => tileKey(left) - tileKey(right)),
+    walls: world.walls
+      .map((wall) => ({ ...wall }))
+      .sort((left, right) => tileKey(left) - tileKey(right)),
+    ...(world.clearedVegetation.length > 0
+      ? {
+          clearedVegetation: world.clearedVegetation
+            .map((tile) => ({ ...tile }))
+            .sort((left, right) => tileKey(left) - tileKey(right)),
+        }
+      : {}),
     households: world.households
-      .map((household) => ({ ...household }))
+      .map(normalizeHouseholdLivelihood)
       .sort((left, right) => left.houseId - right.houseId),
+    ...(world.householdFoodOrders.length > 0
+      ? {
+          householdFoodOrders: world.householdFoodOrders
+            .map((order) => ({ ...order }))
+            .sort((left, right) => left.houseId - right.houseId),
+        }
+      : {}),
     migrants: world.migrants
       .map((migrant) => ({ ...migrant }))
       .sort((left, right) => left.houseId - right.houseId),
@@ -2674,8 +3592,14 @@ export function snapshotWorld(world: WorldState): WorldSnapshot {
     world.economy.lastPayroll > 0 ||
     world.economy.taxableHouses > 0 ||
     world.economy.sentiment !== 50 ||
-    world.economy.lastTradeRevenue > 0
-      ? { economy: { ...world.economy } }
+    world.economy.lastTradeRevenue > 0 ||
+    (world.economy.foodOrderEscrow ?? 0) > 0
+      ? {
+          economy: {
+            ...economyWithoutEscrow,
+            ...((foodOrderEscrow ?? 0) > 0 ? { foodOrderEscrow } : {}),
+          },
+        }
       : {}),
   };
 }

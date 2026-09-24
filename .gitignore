@@ -6,3 +6,7 @@ playwright-report/
 test-results/
 *.log
 .DS_Store
+.fuckclaude/
+.loong/
+.pnpm-store/
+__pycache__/

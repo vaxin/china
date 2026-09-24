@@ -109,8 +109,8 @@ describe("道路路径", () => {
       seq: 3,
       type: "build-road-path",
       tiles: [
-        { x: 31, y: 15 },
-        { x: 32, y: 15 },
+        { x: 63, y: 15 },
+        { x: 64, y: 15 },
       ],
     });
 
@@ -192,10 +192,16 @@ describe("道路服务与入住", () => {
       tiles: [{ x: 0, y: 15 }],
     });
 
-    advanceTicks(world, 5);
+    advanceTicks(world, 1);
+    applyCommand(world, {
+      seq: 3,
+      type: "advance-activity",
+      pulses: 1,
+    });
+    advanceTicks(world, 3);
 
     expect(snapshotWorld(world)).toMatchObject({
-      tick: 5,
+      tick: 4,
       revision: 7,
       households: [{ houseId: 1, residents: 5 }],
     });

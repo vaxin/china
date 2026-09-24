@@ -1,0 +1,749 @@
+{
+  "passed": true,
+  "sheet": "assets/source/i2v/people/v1/final/artisan-walk-4x8.png",
+  "sheetSize": [
+    2048,
+    1024
+  ],
+  "grid": {
+    "rows": 4,
+    "columns": 8
+  },
+  "cellSize": [
+    256,
+    256
+  ],
+  "medianBaseline": 248.0,
+  "maximumBaselineDeviation": 0.0,
+  "medianSpriteHeight": 220.0,
+  "maximumHeightDrift": 0.004545454545454545,
+  "medianBodyAxisX": 127.5,
+  "maximumBodyAxisDeviation": 1.0,
+  "frames": [
+    [
+      {
+        "direction": "south-east",
+        "frame": 0,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-east-0.png",
+        "coverage": 0.1504,
+        "bbox": [
+          95,
+          29,
+          161,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 1,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-east-1.png",
+        "coverage": 0.1592,
+        "bbox": [
+          93,
+          28,
+          175,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 2,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-east-2.png",
+        "coverage": 0.1567,
+        "bbox": [
+          89,
+          29,
+          169,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 3,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-east-3.png",
+        "coverage": 0.1579,
+        "bbox": [
+          88,
+          29,
+          164,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 4,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-east-4.png",
+        "coverage": 0.1545,
+        "bbox": [
+          86,
+          29,
+          172,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 5,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-east-5.png",
+        "coverage": 0.1617,
+        "bbox": [
+          84,
+          29,
+          177,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 6,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-east-6.png",
+        "coverage": 0.1542,
+        "bbox": [
+          87,
+          29,
+          173,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 7,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-east-7.png",
+        "coverage": 0.1396,
+        "bbox": [
+          94,
+          29,
+          163,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      }
+    ],
+    [
+      {
+        "direction": "south-west",
+        "frame": 0,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-west-0.png",
+        "coverage": 0.1504,
+        "bbox": [
+          95,
+          29,
+          161,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-west",
+        "frame": 1,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-west-1.png",
+        "coverage": 0.1592,
+        "bbox": [
+          81,
+          28,
+          163,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 127.0
+      },
+      {
+        "direction": "south-west",
+        "frame": 2,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-west-2.png",
+        "coverage": 0.1567,
+        "bbox": [
+          87,
+          29,
+          167,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-west",
+        "frame": 3,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-west-3.png",
+        "coverage": 0.1579,
+        "bbox": [
+          92,
+          29,
+          168,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-west",
+        "frame": 4,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-west-4.png",
+        "coverage": 0.1545,
+        "bbox": [
+          84,
+          29,
+          170,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.0
+      },
+      {
+        "direction": "south-west",
+        "frame": 5,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-west-5.png",
+        "coverage": 0.1617,
+        "bbox": [
+          79,
+          29,
+          172,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.0
+      },
+      {
+        "direction": "south-west",
+        "frame": 6,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-west-6.png",
+        "coverage": 0.1542,
+        "bbox": [
+          83,
+          29,
+          169,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.0
+      },
+      {
+        "direction": "south-west",
+        "frame": 7,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/south-west-7.png",
+        "coverage": 0.1396,
+        "bbox": [
+          93,
+          29,
+          162,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.0
+      }
+    ],
+    [
+      {
+        "direction": "north-west",
+        "frame": 0,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-west-0.png",
+        "coverage": 0.1368,
+        "bbox": [
+          90,
+          29,
+          157,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 126.75
+      },
+      {
+        "direction": "north-west",
+        "frame": 1,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-west-1.png",
+        "coverage": 0.1568,
+        "bbox": [
+          78,
+          28,
+          158,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 127.0
+      },
+      {
+        "direction": "north-west",
+        "frame": 2,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-west-2.png",
+        "coverage": 0.1532,
+        "bbox": [
+          86,
+          29,
+          163,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 126.5
+      },
+      {
+        "direction": "north-west",
+        "frame": 3,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-west-3.png",
+        "coverage": 0.1514,
+        "bbox": [
+          91,
+          29,
+          161,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 126.5
+      },
+      {
+        "direction": "north-west",
+        "frame": 4,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-west-4.png",
+        "coverage": 0.145,
+        "bbox": [
+          84,
+          29,
+          163,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 126.5
+      },
+      {
+        "direction": "north-west",
+        "frame": 5,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-west-5.png",
+        "coverage": 0.162,
+        "bbox": [
+          76,
+          29,
+          168,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.0
+      },
+      {
+        "direction": "north-west",
+        "frame": 6,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-west-6.png",
+        "coverage": 0.1643,
+        "bbox": [
+          78,
+          28,
+          166,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 126.5
+      },
+      {
+        "direction": "north-west",
+        "frame": 7,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-west-7.png",
+        "coverage": 0.1487,
+        "bbox": [
+          89,
+          29,
+          161,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 126.5
+      }
+    ],
+    [
+      {
+        "direction": "north-east",
+        "frame": 0,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-east-0.png",
+        "coverage": 0.1368,
+        "bbox": [
+          99,
+          29,
+          166,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.25
+      },
+      {
+        "direction": "north-east",
+        "frame": 1,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-east-1.png",
+        "coverage": 0.1568,
+        "bbox": [
+          98,
+          28,
+          178,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-east",
+        "frame": 2,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-east-2.png",
+        "coverage": 0.1532,
+        "bbox": [
+          93,
+          29,
+          170,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "north-east",
+        "frame": 3,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-east-3.png",
+        "coverage": 0.1514,
+        "bbox": [
+          95,
+          29,
+          165,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "north-east",
+        "frame": 4,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-east-4.png",
+        "coverage": 0.145,
+        "bbox": [
+          93,
+          29,
+          172,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "north-east",
+        "frame": 5,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-east-5.png",
+        "coverage": 0.162,
+        "bbox": [
+          88,
+          29,
+          180,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-east",
+        "frame": 6,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-east-6.png",
+        "coverage": 0.1643,
+        "bbox": [
+          90,
+          28,
+          178,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "north-east",
+        "frame": 7,
+        "file": "assets/source/i2v/people/v1/final/qa-artisan/frames/north-east-7.png",
+        "coverage": 0.1487,
+        "bbox": [
+          95,
+          29,
+          167,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      }
+    ]
+  ],
+  "motion": [
+    {
+      "direction": "south-east",
+      "adjacentMaskIoU": [
+        0.6998,
+        0.9058,
+        0.8903,
+        0.6479,
+        0.8724,
+        0.8742,
+        0.7969,
+        0.863
+      ],
+      "adjacentLowerBodyIoU": [
+        0.5367,
+        0.8473,
+        0.832,
+        0.4663,
+        0.7898,
+        0.8102,
+        0.6828,
+        0.7743
+      ],
+      "adjacentRgbDifference": [
+        0.1263,
+        0.0754,
+        0.0741,
+        0.1454,
+        0.0915,
+        0.0997,
+        0.1226,
+        0.093
+      ],
+      "adjacentLowerBodyRgbDifference": [
+        0.1531,
+        0.0943,
+        0.1011,
+        0.1879,
+        0.1321,
+        0.1218,
+        0.1726,
+        0.1273
+      ],
+      "meanMaskIoU": 0.8188,
+      "meanRgbDifference": 0.1035
+    },
+    {
+      "direction": "south-west",
+      "adjacentMaskIoU": [
+        0.6998,
+        0.9058,
+        0.8903,
+        0.6479,
+        0.8724,
+        0.8742,
+        0.7969,
+        0.863
+      ],
+      "adjacentLowerBodyIoU": [
+        0.5367,
+        0.8473,
+        0.832,
+        0.4663,
+        0.7898,
+        0.8102,
+        0.6828,
+        0.7743
+      ],
+      "adjacentRgbDifference": [
+        0.1263,
+        0.0754,
+        0.0741,
+        0.1454,
+        0.0915,
+        0.0997,
+        0.1226,
+        0.093
+      ],
+      "adjacentLowerBodyRgbDifference": [
+        0.1531,
+        0.0943,
+        0.1011,
+        0.1879,
+        0.1321,
+        0.1218,
+        0.1726,
+        0.1273
+      ],
+      "meanMaskIoU": 0.8188,
+      "meanRgbDifference": 0.1035
+    },
+    {
+      "direction": "north-west",
+      "adjacentMaskIoU": [
+        0.722,
+        0.8684,
+        0.892,
+        0.733,
+        0.7656,
+        0.9202,
+        0.7877,
+        0.8258
+      ],
+      "adjacentLowerBodyIoU": [
+        0.5645,
+        0.8004,
+        0.8394,
+        0.5888,
+        0.6348,
+        0.8643,
+        0.6877,
+        0.7468
+      ],
+      "adjacentRgbDifference": [
+        0.1328,
+        0.1057,
+        0.0894,
+        0.1279,
+        0.116,
+        0.0605,
+        0.1214,
+        0.1173
+      ],
+      "adjacentLowerBodyRgbDifference": [
+        0.1775,
+        0.1342,
+        0.1228,
+        0.1813,
+        0.1645,
+        0.0851,
+        0.1555,
+        0.1625
+      ],
+      "meanMaskIoU": 0.8143,
+      "meanRgbDifference": 0.1089
+    },
+    {
+      "direction": "north-east",
+      "adjacentMaskIoU": [
+        0.722,
+        0.8684,
+        0.892,
+        0.733,
+        0.7656,
+        0.9202,
+        0.7877,
+        0.8258
+      ],
+      "adjacentLowerBodyIoU": [
+        0.5645,
+        0.8004,
+        0.8394,
+        0.5888,
+        0.6348,
+        0.8643,
+        0.6877,
+        0.7468
+      ],
+      "adjacentRgbDifference": [
+        0.1328,
+        0.1057,
+        0.0894,
+        0.1279,
+        0.116,
+        0.0605,
+        0.1214,
+        0.1173
+      ],
+      "adjacentLowerBodyRgbDifference": [
+        0.1775,
+        0.1342,
+        0.1228,
+        0.1813,
+        0.1645,
+        0.0851,
+        0.1555,
+        0.1625
+      ],
+      "meanMaskIoU": 0.8143,
+      "meanRgbDifference": 0.1089
+    }
+  ],
+  "directionSimilarity": [
+    {
+      "rows": [
+        "south-east",
+        "south-west"
+      ],
+      "meanMaskIoU": 0.7801
+    },
+    {
+      "rows": [
+        "south-east",
+        "north-west"
+      ],
+      "meanMaskIoU": 0.6917
+    },
+    {
+      "rows": [
+        "south-east",
+        "north-east"
+      ],
+      "meanMaskIoU": 0.7692
+    },
+    {
+      "rows": [
+        "south-west",
+        "north-west"
+      ],
+      "meanMaskIoU": 0.7692
+    },
+    {
+      "rows": [
+        "south-west",
+        "north-east"
+      ],
+      "meanMaskIoU": 0.6917
+    },
+    {
+      "rows": [
+        "north-west",
+        "north-east"
+      ],
+      "meanMaskIoU": 0.6431
+    }
+  ],
+  "previews": {
+    "contactSheet": "assets/source/i2v/people/v1/final/qa-artisan/contact-sheet.png",
+    "gifs": [
+      "assets/source/i2v/people/v1/final/qa-artisan/south-east.gif",
+      "assets/source/i2v/people/v1/final/qa-artisan/south-west.gif",
+      "assets/source/i2v/people/v1/final/qa-artisan/north-west.gif",
+      "assets/source/i2v/people/v1/final/qa-artisan/north-east.gif"
+    ]
+  },
+  "errors": [],
+  "warnings": []
+}

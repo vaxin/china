@@ -12,6 +12,8 @@ export interface RuntimeAsset {
   worldHeight: number;
   anchorY: number;
   groundingFootprint?: number;
+  /** Visual displacement in tile units; never changes simulation coordinates. */
+  placementOffsetTiles?: { x: number; z: number };
 }
 
 export const RUNTIME_ASSETS = {
@@ -22,6 +24,13 @@ export const RUNTIME_ASSETS = {
     worldHeight: 1,
     anchorY: 0,
   },
+  "terrain.loess-slope-face": {
+    url: "/assets/runtime/v1/terrain/loess-slope-face-v2.png",
+    pixelWidth: 1254,
+    pixelHeight: 1254,
+    worldHeight: 2,
+    anchorY: 0,
+  },
   "gate.main": {
     url: "/assets/runtime/v1/buildings/gate.png",
     pixelWidth: 469,
@@ -29,6 +38,7 @@ export const RUNTIME_ASSETS = {
     worldHeight: 11.5,
     anchorY: 0.03,
     groundingFootprint: 0.8,
+    placementOffsetTiles: { x: -0.5, z: 0 },
   },
   "house.plot": {
     url: "/assets/runtime/v1/house/plot.png",
@@ -258,74 +268,143 @@ export const COMMERCE_ASSETS = {
   },
 } as const satisfies Record<string, RuntimeAsset>;
 
-export const CITIZEN_ASSETS = {
-  farmer: [
-    {
-      url: "/assets/runtime/v4/people/farmer-walk-0.png",
-      pixelWidth: 339,
-      pixelHeight: 752,
-      worldHeight: 2.7,
-      anchorY: 0.02,
-    },
-    {
-      url: "/assets/runtime/v4/people/farmer-walk-1.png",
-      pixelWidth: 338,
-      pixelHeight: 757,
-      worldHeight: 2.7,
-      anchorY: 0.02,
-    },
-  ],
-  artisan: [
-    {
-      url: "/assets/runtime/v4/people/artisan-walk-0.png",
-      pixelWidth: 434,
-      pixelHeight: 999,
-      worldHeight: 2.7,
-      anchorY: 0.02,
-    },
-    {
-      url: "/assets/runtime/v4/people/artisan-walk-1.png",
-      pixelWidth: 432,
-      pixelHeight: 1000,
-      worldHeight: 2.7,
-      anchorY: 0.02,
-    },
-  ],
-  merchant: [
-    {
-      url: "/assets/runtime/v4/people/merchant-walk-0.png",
-      pixelWidth: 384,
-      pixelHeight: 785,
-      worldHeight: 2.7,
-      anchorY: 0.02,
-    },
-    {
-      url: "/assets/runtime/v4/people/merchant-walk-1.png",
-      pixelWidth: 373,
-      pixelHeight: 783,
-      worldHeight: 2.7,
-      anchorY: 0.02,
-    },
-  ],
-  official: [
-    {
-      url: "/assets/runtime/v4/people/official-walk-0.png",
-      pixelWidth: 348,
-      pixelHeight: 791,
-      worldHeight: 2.7,
-      anchorY: 0.02,
-    },
-    {
-      url: "/assets/runtime/v4/people/official-walk-1.png",
-      pixelWidth: 342,
-      pixelHeight: 789,
-      worldHeight: 2.7,
-      anchorY: 0.02,
-    },
-  ],
+export interface RuntimeSpriteSheetAsset extends RuntimeAsset {
+  rows: number;
+  columns: number;
+  frameDurationMs: number;
+}
+
+export const WALL_AUTOTILE_ASSET = {
+  url: "/assets/runtime/v6/defense/wall-autotiles-4x4.png",
+  pixelWidth: 1254,
+  pixelHeight: 1254,
+  worldHeight: 7.2,
+  anchorY: 0.025,
+  groundingFootprint: 0.78,
+  rows: 4,
+  columns: 4,
+  frameDurationMs: 0,
+} as const satisfies RuntimeSpriteSheetAsset;
+
+const wallJunctionAsset = (mask: number): RuntimeAsset => ({
+  url: `/assets/runtime/v8/defense/wall-junction-${mask.toString(16).padStart(2, "0")}.png`,
+  pixelWidth: 314,
+  pixelHeight: 314,
+  worldHeight: 7.2,
+  anchorY: 0.025,
+  groundingFootprint: 0.78,
+});
+
+// Every junction is assembled from halves of the same two straight-wall
+// frames. Their four arms terminate at the centre of an identical 314px
+// canvas, which is the visual counterpart of the logical tile centre.
+export const WALL_JUNCTION_ASSETS = {
+  3: wallJunctionAsset(3),
+  6: wallJunctionAsset(6),
+  7: wallJunctionAsset(7),
+  9: wallJunctionAsset(9),
+  11: wallJunctionAsset(11),
+  12: wallJunctionAsset(12),
+  13: wallJunctionAsset(13),
+  14: wallJunctionAsset(14),
+  15: wallJunctionAsset(15),
+} as const satisfies Record<number, RuntimeAsset>;
+
+export const GROUND_COVER_ATLAS = {
+  url: "/assets/runtime/v8/terrain/ground-cover-atlas.png",
+  pixelWidth: 1254,
+  pixelHeight: 1254,
+  worldHeight: 4.8,
+  anchorY: 0.08,
+  rows: 2,
+  columns: 2,
+  frameDurationMs: 0,
+} as const satisfies RuntimeSpriteSheetAsset;
+
+// The generated hand-painted atlas groups silhouettes rather than bitmasks.
+// This lookup binds N/E/S/W masks to the matching straight, corner, T and cross art.
+const WALL_ATLAS_FRAME_BY_MASK = [
+  0, 1, 2, 3, 1, 1, 7, 10, 2, 4, 2, 12, 8, 13, 14, 15,
+] as const;
+
+export function wallAtlasFrame(mask: number): {
+  row: number;
+  column: number;
+} {
+  const frame = WALL_ATLAS_FRAME_BY_MASK[mask & 0b1111];
+  return { row: Math.floor(frame / 4), column: frame % 4 };
+}
+
+export type WallVisual =
+  | {
+      kind: "atlas";
+      asset: RuntimeSpriteSheetAsset;
+      frame: { row: number; column: number };
+    }
+  | { kind: "asset"; asset: RuntimeAsset };
+
+export function wallVisualForMask(mask: number): WallVisual {
+  const normalizedMask = mask & 0b1111;
+  if (normalizedMask in WALL_JUNCTION_ASSETS) {
+    return {
+      kind: "asset",
+      asset:
+        WALL_JUNCTION_ASSETS[
+          normalizedMask as keyof typeof WALL_JUNCTION_ASSETS
+        ],
+    };
+  }
+  return {
+    kind: "atlas",
+    asset: WALL_AUTOTILE_ASSET,
+    frame: wallAtlasFrame(normalizedMask),
+  };
+}
+
+export const CITIZEN_WALK_ASSETS = {
+  farmer: {
+    url: "/assets/runtime/v6/people/farmer-walk-4x8.png",
+    pixelWidth: 256,
+    pixelHeight: 256,
+    worldHeight: 3.14,
+    anchorY: 8 / 256,
+    rows: 4,
+    columns: 8,
+    frameDurationMs: 120,
+  },
+  artisan: {
+    url: "/assets/runtime/v6/people/artisan-walk-4x8.png",
+    pixelWidth: 256,
+    pixelHeight: 256,
+    worldHeight: 3.14,
+    anchorY: 8 / 256,
+    rows: 4,
+    columns: 8,
+    frameDurationMs: 120,
+  },
+  merchant: {
+    url: "/assets/runtime/v6/people/merchant-walk-4x8.png",
+    pixelWidth: 256,
+    pixelHeight: 256,
+    worldHeight: 3.37,
+    anchorY: 8 / 256,
+    rows: 4,
+    columns: 8,
+    frameDurationMs: 120,
+  },
+  official: {
+    url: "/assets/runtime/v6/people/official-walk-4x8.png",
+    pixelWidth: 256,
+    pixelHeight: 256,
+    worldHeight: 3.14,
+    anchorY: 8 / 256,
+    rows: 4,
+    columns: 8,
+    frameDurationMs: 120,
+  },
 } as const satisfies Record<
   Exclude<CitizenVisualRole, "resident">,
-  readonly [RuntimeAsset, RuntimeAsset]
+  RuntimeSpriteSheetAsset
 >;
 
 export const CITIZEN_WORK_ASSETS = {
@@ -455,5 +534,5 @@ export function assetForCitizen(
     );
   }
   if (action === "working") return CITIZEN_WORK_ASSETS[role][frame % 2];
-  return CITIZEN_ASSETS[role][action === "idle" ? 0 : frame % 2];
+  return CITIZEN_WALK_ASSETS[role];
 }

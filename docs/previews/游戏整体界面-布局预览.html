@@ -1,0 +1,1352 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>河洛原 · 游戏整体界面布局预览</title>
+    <style>
+      :root {
+        --night: #071314;
+        --night-2: #0b1b1c;
+        --panel: rgba(8, 24, 25, 0.91);
+        --panel-solid: #0c2223;
+        --paper: #eee4c9;
+        --mist: #98a79e;
+        --brass: #d1ae62;
+        --brass-soft: rgba(209, 174, 98, 0.22);
+        --celadon: #80bcb8;
+        --sage: #b9cf9e;
+        --vermillion: #c97868;
+        --line: rgba(210, 177, 103, 0.23);
+        --line-faint: rgba(210, 177, 103, 0.1);
+        --display: "Songti SC", "Noto Serif SC", STSong, serif;
+        --utility:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-width: 320px;
+        min-height: 100%;
+        margin: 0;
+      }
+
+      body {
+        overflow: hidden;
+        color: var(--paper);
+        background: var(--night);
+        font-family: var(--display);
+      }
+
+      button {
+        border: 0;
+        color: inherit;
+        font: inherit;
+      }
+
+      button:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 2px solid var(--celadon);
+        outline-offset: 3px;
+      }
+
+      .game-shell {
+        display: grid;
+        width: 100vw;
+        height: 100vh;
+        grid-template-columns: 66px 226px minmax(0, 1fr) 332px;
+        grid-template-rows: 74px minmax(0, 1fr) 70px;
+        grid-template-areas:
+          "top top top top"
+          "rail tools map inspect"
+          "rail tools timeline inspect";
+        overflow: hidden;
+        background: #0b1a1a;
+      }
+
+      .topbar {
+        z-index: 12;
+        display: grid;
+        grid-area: top;
+        grid-template-columns: 236px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 24px;
+        padding: 0 22px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(7, 19, 20, 0.96);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+      }
+
+      .brand {
+        min-width: 0;
+      }
+
+      .brand-kicker {
+        margin: 0 0 5px;
+        color: var(--brass);
+        font-family: var(--utility);
+        font-size: 9px;
+        letter-spacing: 0.2em;
+      }
+
+      .brand h1 {
+        margin: 0;
+        color: #f2e7c8;
+        font-size: 23px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+      }
+
+      .world-pulse {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        min-width: 0;
+      }
+
+      .pulse-item {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 0 19px;
+        border-right: 1px solid var(--line-faint);
+        white-space: nowrap;
+      }
+
+      .pulse-item:first-child {
+        padding-left: 0;
+      }
+
+      .pulse-item:last-child {
+        border-right: 0;
+      }
+
+      .pulse-item span {
+        color: var(--mist);
+        font-size: 11px;
+      }
+
+      .pulse-item strong {
+        color: var(--paper);
+        font-family: var(--utility);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .pulse-item strong.positive {
+        color: var(--sage);
+      }
+
+      .calendar-chip {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 8px 0 8px 15px;
+        border-left: 1px solid var(--line);
+        font-family: var(--utility);
+        font-size: 10px;
+      }
+
+      .calendar-chip b {
+        color: var(--brass);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .calendar-chip span {
+        color: var(--mist);
+      }
+
+      .rail {
+        z-index: 10;
+        display: flex;
+        grid-area: rail;
+        flex-direction: column;
+        align-items: center;
+        padding: 19px 8px;
+        border-right: 1px solid var(--line);
+        background: #091819;
+      }
+
+      .rail-mark {
+        display: grid;
+        width: 37px;
+        height: 37px;
+        margin-bottom: 28px;
+        border: 1px solid var(--brass);
+        color: var(--brass);
+        clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
+        font-size: 15px;
+        place-items: center;
+      }
+
+      .rail-nav {
+        display: grid;
+        width: 100%;
+        gap: 9px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .rail-button {
+        display: grid;
+        justify-items: center;
+        gap: 5px;
+        width: 100%;
+        padding: 9px 3px;
+        color: var(--mist);
+        background: transparent;
+        cursor: pointer;
+        font-size: 9px;
+        transition: 160ms ease;
+      }
+
+      .rail-button:hover,
+      .rail-button[aria-selected="true"] {
+        color: var(--paper);
+        background: rgba(209, 174, 98, 0.1);
+      }
+
+      .rail-icon {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        border: 1px solid currentColor;
+        color: var(--brass);
+        clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+        font-size: 12px;
+        place-items: center;
+      }
+
+      .tools-pane {
+        z-index: 9;
+        display: flex;
+        grid-area: tools;
+        min-width: 0;
+        flex-direction: column;
+        padding: 21px 14px 13px;
+        border-right: 1px solid var(--line);
+        background: rgba(7, 21, 22, 0.9);
+      }
+
+      .pane-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 17px;
+      }
+
+      .pane-heading h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+      }
+
+      .pane-heading span {
+        color: var(--mist);
+        font-family: var(--utility);
+        font-size: 8px;
+      }
+
+      .tool-group {
+        margin-bottom: 20px;
+      }
+
+      .tool-group-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 8px;
+        color: var(--brass);
+        font-family: var(--utility);
+        font-size: 9px;
+        letter-spacing: 0.14em;
+      }
+
+      .tool-group-title::after {
+        flex: 1;
+        height: 1px;
+        background: var(--line-faint);
+        content: "";
+      }
+
+      .tool-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .tool-button {
+        display: grid;
+        justify-items: center;
+        gap: 5px;
+        min-height: 58px;
+        padding: 7px 4px;
+        border: 1px solid var(--line);
+        color: var(--mist);
+        background: rgba(10, 30, 31, 0.75);
+        cursor: pointer;
+        font-size: 10px;
+        transition: 160ms ease;
+      }
+
+      .tool-button:hover,
+      .tool-button[data-active="true"] {
+        border-color: var(--brass);
+        color: var(--paper);
+        background: rgba(209, 174, 98, 0.12);
+      }
+
+      .tool-glyph {
+        display: grid;
+        width: 24px;
+        height: 24px;
+        border: 1px solid currentColor;
+        color: var(--brass);
+        clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+        font-size: 11px;
+        place-items: center;
+      }
+
+      .tool-button[data-active="true"] .tool-glyph {
+        color: var(--celadon);
+      }
+
+      .more-tools {
+        width: 100%;
+        margin-top: auto;
+        padding: 10px;
+        border: 1px dashed var(--line-strong);
+        color: var(--mist);
+        background: transparent;
+        cursor: pointer;
+        font-family: var(--utility);
+        font-size: 9px;
+        text-align: left;
+      }
+
+      .more-tools:hover {
+        color: var(--paper);
+        border-color: var(--brass);
+      }
+
+      .map {
+        position: relative;
+        grid-area: map;
+        min-width: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            circle at 50% 48%,
+            rgba(75, 112, 100, 0.28),
+            transparent 32%
+          ),
+          linear-gradient(120deg, rgba(213, 177, 109, 0.04), transparent 40%),
+          #263c31;
+      }
+
+      .map::before {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+              30deg,
+              transparent 48%,
+              rgba(230, 204, 145, 0.1) 49%,
+              transparent 51%
+            )
+            0 0 / 54px 31px,
+          linear-gradient(
+              150deg,
+              transparent 48%,
+              rgba(230, 204, 145, 0.08) 49%,
+              transparent 51%
+            )
+            0 0 / 54px 31px,
+          radial-gradient(
+            circle at 24% 29%,
+            rgba(177, 201, 137, 0.15),
+            transparent 23%
+          ),
+          radial-gradient(
+            circle at 78% 66%,
+            rgba(204, 135, 92, 0.12),
+            transparent 22%
+          );
+        content: "";
+        opacity: 0.78;
+      }
+
+      .map-river {
+        position: absolute;
+        top: -9%;
+        left: 55%;
+        width: 21%;
+        height: 130%;
+        border-right: 12px solid rgba(101, 154, 153, 0.35);
+        border-left: 4px solid rgba(128, 188, 184, 0.15);
+        border-radius: 45%;
+        transform: rotate(19deg);
+        opacity: 0.5;
+      }
+
+      .map-label {
+        position: absolute;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid rgba(242, 231, 200, 0.18);
+        color: rgba(242, 231, 200, 0.75);
+        background: rgba(7, 19, 20, 0.55);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .map-label::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--celadon);
+        box-shadow: 0 0 9px var(--celadon);
+        content: "";
+      }
+
+      .map-label.north {
+        top: 20px;
+        left: 24px;
+      }
+
+      .map-label.south {
+        right: 24px;
+        bottom: 22px;
+      }
+
+      .map-object {
+        position: absolute;
+        z-index: 3;
+        display: grid;
+        justify-items: center;
+        gap: 5px;
+        color: var(--paper);
+        font-size: 10px;
+        text-align: center;
+        filter: drop-shadow(0 7px 7px rgba(0, 0, 0, 0.32));
+      }
+
+      .object-roof {
+        display: grid;
+        width: 56px;
+        height: 39px;
+        border: 1px solid rgba(246, 227, 178, 0.45);
+        color: var(--paper);
+        background: linear-gradient(145deg, #92725a, #584b42);
+        clip-path: polygon(50% 0, 100% 38%, 100% 100%, 0 100%, 0 38%);
+        font-size: 17px;
+        place-items: center;
+      }
+
+      .object-roof.market {
+        background: linear-gradient(145deg, #b76655, #71413e);
+      }
+
+      .object-roof.gate {
+        width: 88px;
+        height: 58px;
+        background: linear-gradient(145deg, #756b62, #343839);
+      }
+
+      .object-roof.well {
+        width: 42px;
+        height: 29px;
+        background: linear-gradient(145deg, #578f90, #2c5d62);
+      }
+
+      .object-house {
+        top: 39%;
+        left: 28%;
+      }
+
+      .object-market {
+        top: 56%;
+        left: 48%;
+      }
+
+      .object-gate {
+        top: 18%;
+        left: 58%;
+      }
+
+      .object-well {
+        top: 47%;
+        left: 18%;
+      }
+
+      .object-farm {
+        top: 69%;
+        left: 68%;
+      }
+
+      .farm-field {
+        display: grid;
+        width: 94px;
+        height: 54px;
+        border: 1px solid rgba(214, 194, 133, 0.42);
+        background:
+          repeating-linear-gradient(
+            90deg,
+            transparent 0 10px,
+            rgba(215, 195, 134, 0.32) 11px 12px
+          ),
+          #8e7b4e;
+        clip-path: polygon(9% 0, 100% 11%, 91% 100%, 0 86%);
+        place-items: center;
+      }
+
+      .road-line {
+        position: absolute;
+        z-index: 1;
+        height: 3px;
+        background: rgba(211, 185, 123, 0.66);
+        box-shadow: 0 0 0 1px rgba(42, 54, 39, 0.45);
+        transform-origin: left center;
+      }
+
+      .road-line.one {
+        top: 53%;
+        left: 17%;
+        width: 46%;
+        transform: rotate(11deg);
+      }
+
+      .road-line.two {
+        top: 45%;
+        left: 34%;
+        width: 29%;
+        transform: rotate(-40deg);
+      }
+
+      .road-line.three {
+        top: 55%;
+        left: 60%;
+        width: 24%;
+        transform: rotate(39deg);
+      }
+
+      .selected-ring {
+        position: absolute;
+        z-index: 2;
+        top: 35%;
+        left: 25%;
+        width: 100px;
+        height: 72px;
+        border: 1px solid var(--celadon);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 5px rgba(128, 188, 184, 0.09),
+          0 0 22px rgba(128, 188, 184, 0.18);
+        transform: rotate(-8deg);
+      }
+
+      .map-tooltip {
+        position: absolute;
+        z-index: 5;
+        top: 29%;
+        left: 20%;
+        padding: 10px 12px;
+        border: 1px solid var(--line-strong);
+        color: var(--paper);
+        background: rgba(7, 19, 20, 0.92);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .map-tooltip b {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--celadon);
+        font-size: 10px;
+        font-weight: 500;
+      }
+
+      .map-help {
+        position: absolute;
+        z-index: 6;
+        right: 22px;
+        bottom: 18px;
+        color: rgba(242, 231, 200, 0.65);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .inspector {
+        z-index: 10;
+        display: flex;
+        grid-area: inspect;
+        min-width: 0;
+        flex-direction: column;
+        padding: 20px 18px 16px;
+        border-left: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: -12px 0 32px rgba(0, 0, 0, 0.17);
+      }
+
+      .inspector-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .inspector-kicker {
+        margin: 0 0 6px;
+        color: var(--brass);
+        font-family: var(--utility);
+        font-size: 9px;
+        letter-spacing: 0.18em;
+      }
+
+      .inspector h2 {
+        margin: 0;
+        font-size: 21px;
+        font-weight: 500;
+      }
+
+      .close-button {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--line);
+        color: var(--mist);
+        background: transparent;
+        cursor: pointer;
+        place-items: center;
+      }
+
+      .close-button:hover {
+        border-color: var(--brass);
+        color: var(--paper);
+      }
+
+      .inspector-status {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 15px 0 16px;
+        padding: 8px 9px;
+        border: 1px solid rgba(128, 188, 184, 0.24);
+        color: var(--celadon);
+        background: rgba(128, 188, 184, 0.08);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .inspector-status::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 8px currentColor;
+        content: "";
+      }
+
+      .inspector-summary {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1px;
+        margin-bottom: 18px;
+        background: var(--line);
+      }
+
+      .inspector-summary div {
+        min-height: 69px;
+        padding: 10px;
+        background: rgba(15, 42, 42, 0.75);
+      }
+
+      .inspector-summary span {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--mist);
+        font-family: var(--utility);
+        font-size: 8px;
+      }
+
+      .inspector-summary strong {
+        font-family: var(--utility);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .inspector-section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 17px 0 9px;
+        color: var(--brass);
+        font-family: var(--utility);
+        font-size: 9px;
+        letter-spacing: 0.14em;
+      }
+
+      .inspector-section-title::after {
+        flex: 1;
+        height: 1px;
+        background: var(--line-faint);
+        content: "";
+      }
+
+      .mini-livelihood {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 4px;
+      }
+
+      .mini-stage {
+        position: relative;
+        display: grid;
+        justify-items: center;
+        gap: 5px;
+        padding: 9px 2px;
+        border: 1px solid var(--line-faint);
+        color: var(--mist);
+        font-size: 9px;
+        text-align: center;
+      }
+
+      .mini-stage.active {
+        border-color: rgba(128, 188, 184, 0.48);
+        color: var(--celadon);
+        background: rgba(128, 188, 184, 0.08);
+      }
+
+      .mini-stage b {
+        display: grid;
+        width: 21px;
+        height: 21px;
+        border: 1px solid currentColor;
+        clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+        font-size: 9px;
+        font-weight: 400;
+        place-items: center;
+      }
+
+      .inspector-note {
+        margin: 15px 0 0;
+        padding: 10px 11px;
+        border-left: 2px solid var(--celadon);
+        color: var(--mist);
+        background: rgba(128, 188, 184, 0.07);
+        font-size: 12px;
+        line-height: 1.65;
+      }
+
+      .inspector-events {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .inspector-events li {
+        display: grid;
+        grid-template-columns: 45px minmax(0, 1fr) auto;
+        gap: 7px;
+        padding: 8px 0;
+        border-bottom: 1px dotted var(--line);
+        color: var(--paper);
+        font-family: var(--utility);
+        font-size: 8px;
+      }
+
+      .inspector-events time,
+      .inspector-events small {
+        color: var(--mist);
+      }
+
+      .inspector-spacer {
+        flex: 1;
+      }
+
+      .inspector-action {
+        width: 100%;
+        padding: 11px;
+        border: 1px solid var(--line-strong);
+        color: var(--paper);
+        background: rgba(209, 174, 98, 0.1);
+        cursor: pointer;
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .inspector-action:hover {
+        border-color: var(--brass);
+        background: rgba(209, 174, 98, 0.18);
+      }
+
+      .timeline {
+        z-index: 11;
+        display: flex;
+        grid-area: timeline;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 11px 20px;
+        border-top: 1px solid var(--line);
+        background: rgba(7, 20, 21, 0.97);
+      }
+
+      .time-controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .time-controls button,
+      .quick-links button {
+        min-width: 38px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        color: var(--mist);
+        background: transparent;
+        cursor: pointer;
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .time-controls button:hover,
+      .time-controls button[data-active="true"],
+      .quick-links button:hover {
+        border-color: var(--brass);
+        color: var(--paper);
+        background: rgba(209, 174, 98, 0.12);
+      }
+
+      .time-controls button:first-child {
+        color: var(--paper);
+      }
+
+      .timeline-copy {
+        display: grid;
+        gap: 3px;
+        color: var(--mist);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .timeline-copy strong {
+        color: var(--paper);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .quick-links {
+        display: flex;
+        gap: 4px;
+      }
+
+      .quick-links button {
+        min-width: auto;
+      }
+
+      @media (max-width: 1180px) {
+        .game-shell {
+          grid-template-columns: 60px 205px minmax(0, 1fr) 300px;
+        }
+
+        .world-pulse {
+          justify-content: flex-start;
+        }
+
+        .pulse-item {
+          padding: 0 11px;
+        }
+
+        .pulse-item:nth-child(3) {
+          display: none;
+        }
+
+        .tools-pane {
+          padding-right: 10px;
+          padding-left: 10px;
+        }
+      }
+
+      @media (max-width: 900px) {
+        body {
+          overflow: auto;
+        }
+
+        .game-shell {
+          min-height: 100vh;
+          grid-template-columns: 58px minmax(0, 1fr) 300px;
+          grid-template-rows: 76px minmax(560px, 1fr) 68px;
+          grid-template-areas:
+            "top top top"
+            "rail map inspect"
+            "rail timeline inspect";
+        }
+
+        .tools-pane {
+          position: absolute;
+          z-index: 20;
+          top: 76px;
+          bottom: 0;
+          left: 58px;
+          width: 205px;
+          visibility: hidden;
+          transform: translateX(-100%);
+        }
+
+        .tools-pane.open {
+          visibility: visible;
+          transform: translateX(0);
+        }
+
+        .topbar {
+          grid-template-columns: 190px minmax(0, 1fr) auto;
+          gap: 12px;
+          padding: 0 14px;
+        }
+
+        .pulse-item:nth-child(2) {
+          display: none;
+        }
+      }
+
+      @media (max-width: 660px) {
+        .game-shell {
+          height: auto;
+          grid-template-columns: 1fr;
+          grid-template-rows: 78px minmax(520px, 1fr) 57px auto auto;
+          grid-template-areas:
+            "top"
+            "map"
+            "rail"
+            "inspect"
+            "timeline";
+        }
+
+        .rail {
+          position: relative;
+          z-index: 21;
+          right: auto;
+          bottom: auto;
+          left: auto;
+          display: block;
+          height: 57px;
+          padding: 5px 10px;
+          border: 0;
+          border-top: 1px solid var(--line);
+          border-bottom: 1px solid var(--line);
+          background: rgba(7, 19, 20, 0.93);
+        }
+
+        .rail-mark {
+          display: none;
+        }
+
+        .rail-nav {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          height: 100%;
+        }
+
+        .rail-button {
+          grid-template-columns: 24px auto;
+          justify-content: center;
+          gap: 6px;
+          padding: 4px;
+        }
+
+        .rail-icon {
+          width: 22px;
+          height: 22px;
+          font-size: 9px;
+        }
+
+        .tools-pane {
+          top: 78px;
+          bottom: auto;
+          width: min(300px, calc(100vw - 20px));
+        }
+
+        .topbar {
+          display: block;
+          height: 78px;
+          padding: 11px 14px;
+        }
+
+        .brand h1 {
+          font-size: 18px;
+        }
+
+        .brand-kicker {
+          margin-bottom: 3px;
+        }
+
+        .world-pulse {
+          position: absolute;
+          top: 13px;
+          right: 14px;
+        }
+
+        .pulse-item:first-child,
+        .pulse-item:nth-child(2) {
+          display: none;
+        }
+
+        .calendar-chip {
+          padding-left: 9px;
+          border-left: 0;
+        }
+
+        .map {
+          min-height: 520px;
+        }
+
+        .inspector {
+          min-height: 420px;
+          border-top: 1px solid var(--line);
+          border-left: 0;
+        }
+
+        .timeline {
+          flex-wrap: wrap;
+          gap: 8px;
+          padding: 9px 12px 72px;
+        }
+
+        .timeline-copy {
+          order: -1;
+          width: 100%;
+        }
+
+        .quick-links {
+          margin-left: auto;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topbar">
+        <div class="brand">
+          <p class="brand-kicker">古城营造司 · 民生簿</p>
+          <h1>河洛原</h1>
+        </div>
+        <div class="world-pulse" aria-label="世界摘要">
+          <div class="pulse-item"><span>国库</span><strong>500</strong></div>
+          <div class="pulse-item"><span>民心</span><strong>50</strong></div>
+          <div class="pulse-item">
+            <span>人口</span><strong>12 · 工 8</strong>
+          </div>
+          <div class="pulse-item">
+            <span>房屋</span><strong class="positive">4</strong>
+          </div>
+        </div>
+        <div class="calendar-chip"><b>八月</b><span>tick 8 · 已保存</span></div>
+      </header>
+
+      <aside class="rail" aria-label="主导航">
+        <div class="rail-mark" aria-hidden="true">河</div>
+        <nav class="rail-nav" role="tablist">
+          <button
+            class="rail-button"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            data-rail="build"
+          >
+            <span class="rail-icon">造</span><span>建设</span>
+          </button>
+          <button
+            class="rail-button"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-rail="policy"
+          >
+            <span class="rail-icon">策</span><span>治理</span>
+          </button>
+          <button
+            class="rail-button"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-rail="people"
+          >
+            <span class="rail-icon">人</span><span>住户</span>
+          </button>
+          <button
+            class="rail-button"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-rail="map"
+          >
+            <span class="rail-icon">图</span><span>地图</span>
+          </button>
+        </nav>
+      </aside>
+
+      <aside class="tools-pane" data-tools-pane aria-label="建设工具">
+        <div class="pane-heading">
+          <h2 data-pane-title>建设</h2>
+          <span>13 项工具</span>
+        </div>
+        <section class="tool-group" data-build-group>
+          <h3 class="tool-group-title">基础民生</h3>
+          <ul class="tool-list">
+            <li>
+              <button class="tool-button" type="button" data-active="true">
+                <span class="tool-glyph">舍</span>住宅
+              </button>
+            </li>
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">路</span>道路
+              </button>
+            </li>
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">井</span>水井
+              </button>
+            </li>
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">市</span>市场
+              </button>
+            </li>
+          </ul>
+        </section>
+        <section class="tool-group" data-build-group>
+          <h3 class="tool-group-title">生产流通</h3>
+          <ul class="tool-list">
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">田</span>农场
+              </button>
+            </li>
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">仓</span>粮仓
+              </button>
+            </li>
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">麻</span>麻田
+              </button>
+            </li>
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">织</span>织坊
+              </button>
+            </li>
+          </ul>
+        </section>
+        <section class="tool-group" data-build-group>
+          <h3 class="tool-group-title">公共设施</h3>
+          <ul class="tool-list">
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">税</span>税务署
+              </button>
+            </li>
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">乐</span>音乐学校
+              </button>
+            </li>
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">兵</span>步兵营
+              </button>
+            </li>
+            <li>
+              <button class="tool-button" type="button">
+                <span class="tool-glyph">拆</span>拆除
+              </button>
+            </li>
+          </ul>
+        </section>
+        <button class="more-tools" type="button" data-more>
+          ＋ 更多建设 / 作物选择
+        </button>
+      </aside>
+
+      <section class="map" aria-label="城市沙盘">
+        <div class="map-label north">城门入口 · 已连通</div>
+        <div class="map-label south">东路 · 6 格 · 可通行</div>
+        <div class="map-river" aria-hidden="true"></div>
+        <div class="road-line one" aria-hidden="true"></div>
+        <div class="road-line two" aria-hidden="true"></div>
+        <div class="road-line three" aria-hidden="true"></div>
+        <div class="selected-ring" aria-hidden="true"></div>
+        <div class="map-object object-gate">
+          <span class="object-roof gate">门</span><span>城门</span>
+        </div>
+        <div class="map-object object-house">
+          <span class="object-roof">舍</span><span>住宅 #01</span>
+        </div>
+        <div class="map-object object-market">
+          <span class="object-roof market">市</span><span>市场 #02</span>
+        </div>
+        <div class="map-object object-well">
+          <span class="object-roof well">井</span><span>水井</span>
+        </div>
+        <div class="map-object object-farm">
+          <span class="farm-field">田</span><span>小麦 · 收获月</span>
+        </div>
+        <div class="map-tooltip">
+          <b>已选：住宅 #01</b><span>点击打开住户详情 · 回车确认建造</span>
+        </div>
+        <div class="map-help">方向键选格 · 滚轮缩放 · 中键平移</div>
+      </section>
+
+      <aside class="inspector" aria-label="当前选中详情">
+        <header class="inspector-header">
+          <div>
+            <p class="inspector-kicker">当前选中 / HOUSEHOLD</p>
+            <h2>住户 #01</h2>
+          </div>
+          <button class="close-button" type="button" aria-label="关闭详情">
+            ×
+          </button>
+        </header>
+        <div class="inspector-status">运粮中 · 下月抵达 · 余额 17 钱</div>
+        <div class="inspector-summary">
+          <div><span>人口</span><strong>5 人</strong></div>
+          <div><span>本月收入</span><strong class="income">+4 钱</strong></div>
+          <div><span>口粮</span><strong>余 1 月</strong></div>
+          <div><span>住宅</span><strong>二级</strong></div>
+        </div>
+        <h3 class="inspector-section-title">生计链</h3>
+        <div class="mini-livelihood" aria-label="生计链摘要">
+          <div class="mini-stage"><b>作</b><span>劳作</span></div>
+          <div class="mini-stage"><b>钱</b><span>钱袋</span></div>
+          <div class="mini-stage active"><b>运</b><span>采办</span></div>
+          <div class="mini-stage"><b>粮</b><span>粮瓮</span></div>
+        </div>
+        <p class="inspector-note">
+          当前停在“采办”：钱已扣、库存已留，等待道路配送完成。
+        </p>
+        <h3 class="inspector-section-title">最近事件</h3>
+        <ol class="inspector-events">
+          <li>
+            <time>八月</time><span>市场预扣一份小麦</span
+            ><strong class="expense">−1</strong>
+          </li>
+          <li>
+            <time>八月</time><span>公共工役结算工资</span
+            ><strong class="income">+4</strong>
+          </li>
+          <li>
+            <time>七月</time><span>迁入携带安家本钱</span
+            ><strong class="income">+12</strong>
+          </li>
+        </ol>
+        <div class="inspector-spacer"></div>
+        <button class="inspector-action" type="button">打开完整住户簿 →</button>
+      </aside>
+
+      <footer class="timeline" aria-label="时间控制">
+        <div class="time-controls">
+          <button type="button" data-speed="pause">暂停</button>
+          <button type="button" data-speed="1" data-active="true">1×</button>
+          <button type="button" data-speed="2">2×</button>
+          <button type="button" data-speed="4">4×</button>
+        </div>
+        <div class="timeline-copy">
+          <strong>八月 · tick 8</strong
+          ><span>下一月结算：工资 / 税款 / 订单</span>
+        </div>
+        <div class="quick-links">
+          <button type="button">住户</button><button type="button">政策</button
+          ><button type="button">存档已保存</button>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      const railButtons = [...document.querySelectorAll("[data-rail]")];
+      const toolPane = document.querySelector("[data-tools-pane]");
+      const paneTitle = document.querySelector("[data-pane-title]");
+      const titles = {
+        build: "建设",
+        policy: "治理",
+        people: "住户",
+        map: "地图",
+      };
+
+      railButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const selected = button.dataset.rail;
+          railButtons.forEach((candidate) =>
+            candidate.setAttribute(
+              "aria-selected",
+              String(candidate === button),
+            ),
+          );
+          paneTitle.textContent = titles[selected];
+          if (selected === "build") {
+            toolPane.classList.add("open");
+          } else {
+            toolPane.classList.remove("open");
+          }
+        });
+      });
+
+      document.querySelectorAll(".tool-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tool-button")
+            .forEach((candidate) => (candidate.dataset.active = "false"));
+          button.dataset.active = "true";
+        });
+      });
+
+      document.querySelectorAll("[data-speed]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document
+            .querySelectorAll("[data-speed]")
+            .forEach((candidate) => (candidate.dataset.active = "false"));
+          button.dataset.active = "true";
+        });
+      });
+
+      document
+        .querySelector("[data-more]")
+        .addEventListener("click", (event) => {
+          event.currentTarget.textContent = "✓ 更多建设已展开 · 预览中";
+        });
+    </script>
+  </body>
+</html>

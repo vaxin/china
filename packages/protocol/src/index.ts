@@ -1,4 +1,28 @@
 import { z } from "zod";
+import {
+  DEFAULT_TERRAIN_CONTRACT,
+  isFootprintBuildableOnTerrain,
+  isTileInsideTerrain,
+  terrainTileKey,
+  type TerrainContract,
+} from "./terrain-topology";
+
+export {
+  DEFAULT_TERRAIN_CONTRACT,
+  isFootprintBuildableOnTerrain,
+  isTerrainTileBuildable,
+  isTileInsideTerrain,
+  sampleTerrain,
+  sampleTerrainCover,
+  terrainElevationAt,
+  terrainNormalAt,
+  terrainTileKey,
+  type TerrainContract,
+  type TerrainCoverKind,
+  type TerrainCoverSample,
+  type TerrainRegion,
+  type TerrainSample,
+} from "./terrain-topology";
 
 export const MAP_SIZE = 32 as const;
 export const HOUSE_FOOTPRINT = 2 as const;
@@ -18,14 +42,19 @@ export const UPGRADED_HOUSE_CAPACITY = 10 as const;
 export const WELL_SERVICE_RANGE = 8 as const;
 export const FARM_STOCK_CAPACITY = 3 as const;
 export const GRANARY_STOCK_CAPACITY = 10 as const;
-export const MARKET_STOCK_CAPACITY = 4 as const;
+export const MARKET_STOCK_CAPACITY = 12 as const;
 export const FARM_PRODUCTION_INTERVAL = 3 as const;
 export const FOOD_TRANSPORT_RANGE = 12 as const;
 export const MARKET_RESTOCK_RANGE = 12 as const;
 export const MARKET_SERVICE_RANGE = 8 as const;
 export const HOUSEHOLD_FOOD_RESERVE_MAX = 3 as const;
+export const HOUSEHOLD_STARTING_CASH = 12 as const;
+export const HOUSEHOLD_LEDGER_LIMIT = 12 as const;
+export const HOUSEHOLD_FOOD_PRICE = 1 as const;
+export const FOOD_UNITS_PER_FIVE_RESIDENTS = 1 as const;
+export const FOOD_BUSINESS_STARTING_CASH = 12 as const;
 export const CITY_GATE_TILE = { x: 0, y: 15 } as const;
-export const SAVE_FORMAT_VERSION = 6 as const;
+export const SAVE_FORMAT_VERSION = 9 as const;
 
 const LEGACY_V3_HOUSE_CAPACITY = 5 as const;
 const LEGACY_V3_UPGRADED_HOUSE_CAPACITY = 10 as const;
@@ -86,10 +115,22 @@ export interface BuildRoadPathCommand {
   tiles: TileCoordinate[];
 }
 
+export interface BuildWallPathCommand {
+  seq: number;
+  type: "build-wall-path";
+  tiles: TileCoordinate[];
+}
+
 export interface AdvanceTimeCommand {
   seq: number;
   type: "advance-time";
   ticks: number;
+}
+
+export interface AdvanceActivityCommand {
+  seq: number;
+  type: "advance-activity";
+  pulses: number;
 }
 
 export interface DemolishCommand {
@@ -142,7 +183,9 @@ export interface HoldNewYearFestivalCommand {
 export type GameCommand =
   | BuildCommand
   | BuildRoadPathCommand
+  | BuildWallPathCommand
   | AdvanceTimeCommand
+  | AdvanceActivityCommand
   | DemolishCommand
   | SetLaborPolicyCommand
   | SetGranaryPolicyCommand
@@ -153,7 +196,9 @@ export type GameCommand =
 
 export type BuildRejectionReason =
   | "occupied"
+  | "vegetation"
   | "out-of-bounds"
+  | "steep-slope"
   | "invalid-path"
   | "nothing-to-demolish"
   | "not-found"
@@ -196,9 +241,9 @@ export interface WellBuildingView extends BuildingBase {
   footprint: { width: 1; height: 1 };
 }
 
-export type FarmFoodStock = 0 | 1 | 2 | 3;
-export type GranaryFoodStock = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
-export type MarketFoodStock = 0 | 1 | 2 | 3 | 4;
+export type FarmFoodStock = number;
+export type GranaryFoodStock = number;
+export type MarketFoodStock = number;
 export type HouseholdFoodReserveTicks = 0 | 1 | 2 | 3;
 export type FoodStocks = Record<CropType, number>;
 export type FoodQuality = "none" | "bland" | "plain" | "appetizing" | "tasty";
@@ -209,6 +254,9 @@ export interface FarmBuildingView extends BuildingBase {
   footprint: { width: 2; height: 2 };
   cropType: CropType;
   foodStock: FarmFoodStock;
+  operatingCash?: number;
+  wageArrears?: number;
+  staffedWorkers?: number;
 }
 
 export interface GranaryBuildingView extends BuildingBase {
@@ -218,6 +266,9 @@ export interface GranaryBuildingView extends BuildingBase {
   foodStock: GranaryFoodStock;
   foodStocks: FoodStocks;
   acceptedCrops?: CropType[];
+  operatingCash?: number;
+  wageArrears?: number;
+  staffedWorkers?: number;
 }
 
 export interface MarketBuildingView extends BuildingBase {
@@ -227,6 +278,9 @@ export interface MarketBuildingView extends BuildingBase {
   foodStock: MarketFoodStock;
   foodStocks: FoodStocks;
   clothingStock?: 0 | 1 | 2 | 3 | 4;
+  operatingCash?: number;
+  wageArrears?: number;
+  staffedWorkers?: number;
 }
 
 export interface HempFarmBuildingView extends BuildingBase {
@@ -296,9 +350,57 @@ export interface HouseholdView {
   houseId: number;
   residents: 5 | 10;
   foodReserveTicks: HouseholdFoodReserveTicks;
+  /** Real food units; omitted only by legacy fixtures and normalized at the boundary. */
+  foodReserveUnits?: number;
   foodQuality: FoodQuality;
   clothingReserveTicks?: HouseholdFoodReserveTicks;
   entertainmentReserveTicks?: HouseholdFoodReserveTicks;
+  /** Optional in TypeScript for legacy fixture compatibility; normalized by the protocol. */
+  cash?: number;
+  employedWorkers?: number;
+  lastIncome?: number;
+  lastFoodExpense?: number;
+  wageArrears?: number;
+  taxArrears?: number;
+  foodShortageReason?: FoodShortageReason;
+  livelihoodLedger?: HouseholdLivelihoodLedgerEntryView[];
+}
+
+export type FoodShortageReason =
+  | "none"
+  | "delivery-pending"
+  | "unaffordable"
+  | "out-of-stock"
+  | "disconnected"
+  | "no-market";
+
+export type LivelihoodLedgerKind =
+  | "arrival-funds"
+  | "wage"
+  | "wage-arrears"
+  | "tax"
+  | "tax-arrears"
+  | "food-order"
+  | "food-delivery"
+  | "food-refund";
+
+export interface HouseholdLivelihoodLedgerEntryView {
+  id: string;
+  tick: number;
+  kind: LivelihoodLedgerKind;
+  amount: number;
+  balanceAfter: number;
+}
+
+export interface HouseholdFoodOrderView {
+  houseId: number;
+  marketId: number;
+  cropType: CropType;
+  foodQuality: FoodQuality;
+  quantity?: number;
+  price: number;
+  placedAtTick: number;
+  arrivesAtTick: number;
 }
 
 export interface PerformerView {
@@ -318,7 +420,7 @@ export interface CitizenView {
   x: number;
   y: number;
   state: CitizenState;
-  dwellTicks: 0 | 1;
+  dwellTicks: number;
 }
 
 export interface MigrantView {
@@ -442,11 +544,18 @@ export interface LegacyWorldSnapshotV5 {
 
 export interface WorldSnapshot {
   map: { width: number; height: number };
+  /** Optional for pre-v8 fixtures; save and simulation boundaries normalize it. */
+  terrain?: TerrainContract;
   tick: number;
   revision: number;
   buildings: BuildingView[];
   roads: TileCoordinate[];
+  /** Deterministic suburban vegetation tiles cleared by the player. */
+  clearedVegetation?: TileCoordinate[];
+  /** Optional in TypeScript for legacy fixtures; protocol boundaries normalize it to an array. */
+  walls?: TileCoordinate[];
   households: HouseholdView[];
+  householdFoodOrders?: HouseholdFoodOrderView[];
   migrants: MigrantView[];
   performers?: PerformerView[];
   citizens?: CitizenView[];
@@ -470,6 +579,7 @@ export interface WorldSnapshot {
     sentiment: number;
     lastTradeRevenue: number;
     lastFestivalYear?: number;
+    foodOrderEscrow?: number;
   };
 }
 
@@ -503,13 +613,31 @@ export interface SaveEnvelopeV6 {
   world: WorldSnapshot;
 }
 
+export interface SaveEnvelopeV7 {
+  saveFormatVersion: 7;
+  world: WorldSnapshot;
+}
+
+export interface SaveEnvelopeV8 {
+  saveFormatVersion: 8;
+  world: WorldSnapshot;
+}
+
+export interface SaveEnvelopeV9 {
+  saveFormatVersion: 9;
+  world: WorldSnapshot;
+}
+
 export type SaveEnvelope =
   | SaveEnvelopeV1
   | SaveEnvelopeV2
   | SaveEnvelopeV3
   | SaveEnvelopeV4
   | SaveEnvelopeV5
-  | SaveEnvelopeV6;
+  | SaveEnvelopeV6
+  | SaveEnvelopeV7
+  | SaveEnvelopeV8
+  | SaveEnvelopeV9;
 
 export type WorkerRequest =
   | { type: "initialize"; snapshot?: WorldSnapshot }
@@ -567,6 +695,7 @@ const safeCoordinateSchema = z
 const commandTileCoordinateSchema = z
   .object({ x: safeCoordinateSchema, y: safeCoordinateSchema })
   .strict();
+const worldTileCoordinateSchema = commandTileCoordinateSchema;
 const tileCoordinateSchema = z
   .object({
     x: z
@@ -630,7 +759,17 @@ const buildRoadPathCommandSchema = z
     tiles: z
       .array(commandTileCoordinateSchema)
       .min(1)
-      .max(MAP_SIZE * MAP_SIZE),
+      .max(DEFAULT_TERRAIN_CONTRACT.width * DEFAULT_TERRAIN_CONTRACT.height),
+  })
+  .strict();
+const buildWallPathCommandSchema = z
+  .object({
+    seq: nonnegativeSafeIntegerSchema,
+    type: z.literal("build-wall-path"),
+    tiles: z
+      .array(commandTileCoordinateSchema)
+      .min(1)
+      .max(DEFAULT_TERRAIN_CONTRACT.width * DEFAULT_TERRAIN_CONTRACT.height),
   })
   .strict();
 const advanceTimeCommandSchema = z
@@ -638,6 +777,13 @@ const advanceTimeCommandSchema = z
     seq: nonnegativeSafeIntegerSchema,
     type: z.literal("advance-time"),
     ticks: z.number().int().min(1).max(60),
+  })
+  .strict();
+const advanceActivityCommandSchema = z
+  .object({
+    seq: nonnegativeSafeIntegerSchema,
+    type: z.literal("advance-activity"),
+    pulses: z.number().int().min(1).max(10),
   })
   .strict();
 const demolishCommandSchema = z
@@ -702,7 +848,9 @@ const holdNewYearFestivalCommandSchema = z
 export const gameCommandSchema = z.discriminatedUnion("type", [
   buildCommandSchema,
   buildRoadPathCommandSchema,
+  buildWallPathCommandSchema,
   advanceTimeCommandSchema,
+  advanceActivityCommandSchema,
   demolishCommandSchema,
   setLaborPolicyCommandSchema,
   setGranaryPolicyCommandSchema,
@@ -824,12 +972,10 @@ const farmBuildingSchema = z
       })
       .strict(),
     cropType: cropTypeSchema.default("millet"),
-    foodStock: z.union([
-      z.literal(0),
-      z.literal(1),
-      z.literal(2),
-      z.literal(FARM_STOCK_CAPACITY),
-    ]),
+    foodStock: z.number().int().min(0).max(FARM_STOCK_CAPACITY),
+    operatingCash: nonnegativeSafeIntegerSchema.optional(),
+    wageArrears: nonnegativeSafeIntegerSchema.optional(),
+    staffedWorkers: nonnegativeSafeIntegerSchema.optional(),
   })
   .strict();
 const legacyGranaryBuildingSchema = z
@@ -853,19 +999,7 @@ const legacyGranaryBuildingSchema = z
         height: z.literal(GRANARY_FOOTPRINT),
       })
       .strict(),
-    foodStock: z.union([
-      z.literal(0),
-      z.literal(1),
-      z.literal(2),
-      z.literal(3),
-      z.literal(4),
-      z.literal(5),
-      z.literal(6),
-      z.literal(7),
-      z.literal(8),
-      z.literal(9),
-      z.literal(GRANARY_STOCK_CAPACITY),
-    ]),
+    foodStock: z.number().int().min(0).max(GRANARY_STOCK_CAPACITY),
   })
   .strict();
 const legacyBuildingV4Schema = z.discriminatedUnion("typeId", [
@@ -895,13 +1029,7 @@ const legacyMarketBuildingSchema = z
         height: z.literal(MARKET_FOOTPRINT),
       })
       .strict(),
-    foodStock: z.union([
-      z.literal(0),
-      z.literal(1),
-      z.literal(2),
-      z.literal(3),
-      z.literal(MARKET_STOCK_CAPACITY),
-    ]),
+    foodStock: z.number().int().min(0).max(MARKET_STOCK_CAPACITY),
   })
   .strict();
 const legacyBuildingV5Schema = z.discriminatedUnion("typeId", [
@@ -932,6 +1060,9 @@ const granaryBuildingSchema = legacyGranaryBuildingSchema
         message: "粮仓接收作物不能重复",
       })
       .optional(),
+    operatingCash: nonnegativeSafeIntegerSchema.optional(),
+    wageArrears: nonnegativeSafeIntegerSchema.optional(),
+    staffedWorkers: nonnegativeSafeIntegerSchema.optional(),
   })
   .strict();
 const marketBuildingSchema = legacyMarketBuildingSchema
@@ -946,6 +1077,9 @@ const marketBuildingSchema = legacyMarketBuildingSchema
         z.literal(4),
       ])
       .optional(),
+    operatingCash: nonnegativeSafeIntegerSchema.optional(),
+    wageArrears: nonnegativeSafeIntegerSchema.optional(),
+    staffedWorkers: nonnegativeSafeIntegerSchema.optional(),
   })
   .strict();
 const hempFarmBuildingSchema = z
@@ -1143,23 +1277,37 @@ const tradingPostBuildingSchema = z
     ]),
   })
   .strict();
+const currentBuildingCoordinates = {
+  x: safeCoordinateSchema,
+  y: safeCoordinateSchema,
+};
 const buildingSchema = z.discriminatedUnion("typeId", [
-  houseBuildingSchema,
-  wellBuildingSchema,
-  farmBuildingSchema,
-  granaryBuildingSchema,
-  marketBuildingSchema,
-  hempFarmBuildingSchema,
-  weaverBuildingSchema,
-  weaponsmithBuildingSchema,
-  infantryFortBuildingSchema,
-  taxOfficeBuildingSchema,
-  musicSchoolBuildingSchema,
-  tradingPostBuildingSchema,
+  houseBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  wellBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  farmBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  granaryBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  marketBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  hempFarmBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  weaverBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  weaponsmithBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  infantryFortBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  taxOfficeBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  musicSchoolBuildingSchema.extend(currentBuildingCoordinates).strict(),
+  tradingPostBuildingSchema.extend(currentBuildingCoordinates).strict(),
 ]);
 
 const mapSchema = z
   .object({ width: z.literal(MAP_SIZE), height: z.literal(MAP_SIZE) })
+  .strict();
+const terrainContractSchema = z
+  .object({
+    originX: safeCoordinateSchema,
+    originY: safeCoordinateSchema,
+    width: positiveSafeIntegerSchema,
+    height: positiveSafeIntegerSchema,
+    seed: safeCoordinateSchema,
+    maxBuildableSlope: z.number().finite().min(0),
+  })
   .strict();
 const legacyWorldBaseSchema = z
   .object({
@@ -1210,17 +1358,33 @@ function normalizeCurrentBuildings(value: unknown): unknown {
     if (
       typeof building !== "object" ||
       building === null ||
-      !("typeId" in building) ||
-      (building.typeId !== "granary" && building.typeId !== "market") ||
-      "foodStocks" in building
+      !("typeId" in building)
     ) {
       return building;
     }
-    return {
+    const normalized = {
       ...building,
-      foodStocks: defaultFoodStocks(
-        "foodStock" in building ? building.foodStock : 0,
-      ),
+      ...((building.typeId === "granary" || building.typeId === "market") &&
+      !("foodStocks" in building)
+        ? {
+            foodStocks: defaultFoodStocks(
+              "foodStock" in building ? building.foodStock : 0,
+            ),
+          }
+        : {}),
+    };
+    if (
+      building.typeId !== "farm" &&
+      building.typeId !== "granary" &&
+      building.typeId !== "market"
+    ) {
+      return normalized;
+    }
+    return {
+      operatingCash: FOOD_BUSINESS_STARTING_CASH,
+      wageArrears: 0,
+      staffedWorkers: 0,
+      ...normalized,
     };
   });
 }
@@ -1239,6 +1403,7 @@ function normalizeCurrentEconomy(value: unknown): unknown {
 const worldBaseSchema = z
   .object({
     map: mapSchema,
+    terrain: terrainContractSchema.optional(),
     tick: nonnegativeSafeIntegerSchema,
     revision: nonnegativeSafeIntegerSchema,
     buildings: z.preprocess(normalizeCurrentBuildings, z.array(buildingSchema)),
@@ -1282,6 +1447,7 @@ const worldBaseSchema = z
           sentiment: z.number().int().min(0).max(100),
           lastTradeRevenue: nonnegativeSafeIntegerSchema,
           lastFestivalYear: positiveSafeIntegerSchema.optional(),
+          foodOrderEscrow: nonnegativeSafeIntegerSchema.optional(),
         })
         .strict()
         .optional(),
@@ -1292,16 +1458,8 @@ const worldBaseSchema = z
           .object({
             schoolId: positiveSafeIntegerSchema,
             targetMarketId: positiveSafeIntegerSchema,
-            x: z
-              .number()
-              .int()
-              .min(0)
-              .max(MAP_SIZE - 1),
-            y: z
-              .number()
-              .int()
-              .min(0)
-              .max(MAP_SIZE - 1),
+            x: safeCoordinateSchema,
+            y: safeCoordinateSchema,
           })
           .strict(),
       )
@@ -1313,8 +1471,8 @@ const worldBaseSchema = z
             id: positiveSafeIntegerSchema,
             houseId: positiveSafeIntegerSchema,
             workplaceId: positiveSafeIntegerSchema.nullable(),
-            x: tileCoordinateSchema.shape.x,
-            y: tileCoordinateSchema.shape.y,
+            x: safeCoordinateSchema,
+            y: safeCoordinateSchema,
             state: z.union([
               z.literal("commuting"),
               z.literal("working"),
@@ -1323,7 +1481,7 @@ const worldBaseSchema = z
               z.literal("strolling"),
               z.literal("waiting"),
             ]),
-            dwellTicks: z.union([z.literal(0), z.literal(1)]),
+            dwellTicks: z.number().int().nonnegative(),
           })
           .strict(),
       )
@@ -1416,12 +1574,12 @@ function validateFoodStockBreakdown(
   }
 }
 
-function tileKey(tile: TileCoordinate): number {
-  return tile.y * MAP_SIZE + tile.x;
+function tileKey(tile: TileCoordinate): string {
+  return terrainTileKey(tile);
 }
 
 function isInsideMap(tile: TileCoordinate): boolean {
-  return tile.x >= 0 && tile.y >= 0 && tile.x < MAP_SIZE && tile.y < MAP_SIZE;
+  return isTileInsideTerrain(tile);
 }
 
 function orthogonalNeighbors(tile: TileCoordinate): TileCoordinate[] {
@@ -1453,17 +1611,14 @@ function footprintBorderTiles(building: FootprintBuilding): TileCoordinate[] {
       },
     );
   }
-  return tiles.filter(
-    (tile) =>
-      tile.x >= 0 && tile.y >= 0 && tile.x < MAP_SIZE && tile.y < MAP_SIZE,
-  );
+  return tiles.filter((tile) => isInsideMap(tile));
 }
 
-function connectedRoadKeys(roads: TileCoordinate[]): Set<number> {
+function connectedRoadKeys(roads: TileCoordinate[]): Set<string> {
   const allRoadKeys = new Set(roads.map(tileKey));
   const entranceKey = tileKey(CITY_GATE_TILE);
   if (!allRoadKeys.has(entranceKey)) return new Set();
-  const connected = new Set<number>([entranceKey]);
+  const connected = new Set<string>([entranceKey]);
   const queue: TileCoordinate[] = [{ ...CITY_GATE_TILE }];
   let head = 0;
   while (head < queue.length) {
@@ -1485,11 +1640,11 @@ function waterRoadDistances(
   roads: TileCoordinate[],
   wells: FootprintBuilding[],
   serviceRange: number,
-): Map<number, number> {
+): Map<string, number> {
   const allRoadKeys = new Set(roads.map(tileKey));
   const tileByKey = new Map(roads.map((road) => [tileKey(road), road]));
-  const distances = new Map<number, number>();
-  const queue: number[] = [];
+  const distances = new Map<string, number>();
+  const queue: string[] = [];
   for (const well of wells) {
     for (const tile of footprintBorderTiles(well)) {
       const key = tileKey(tile);
@@ -1523,8 +1678,10 @@ function validateRoadLayer(
   roads: TileCoordinate[],
   buildings: FootprintBuilding[],
   context: z.RefinementCtx,
+  walls: TileCoordinate[] = [],
 ): void {
-  const roadKeys = new Set<number>();
+  const roadKeys = new Set<string>();
+  const wallKeys = new Set(walls.map(tileKey));
   for (let index = 0; index < roads.length; index += 1) {
     const road = roads[index];
     const key = tileKey(road);
@@ -1543,12 +1700,62 @@ function validateRoadLayer(
         path: ["roads", index],
       });
     }
+    if (wallKeys.has(key)) {
+      context.addIssue({
+        code: "custom",
+        message: "道路不能覆盖城墙",
+        path: ["roads", index],
+      });
+    }
+  }
+}
+
+function validateWallLayer(
+  walls: TileCoordinate[],
+  roads: TileCoordinate[],
+  buildings: FootprintBuilding[],
+  context: z.RefinementCtx,
+): void {
+  const wallKeys = new Set<string>();
+  const roadKeys = new Set(roads.map(tileKey));
+  for (let index = 0; index < walls.length; index += 1) {
+    const wall = walls[index];
+    const key = tileKey(wall);
+    if (wallKeys.has(key)) {
+      context.addIssue({
+        code: "custom",
+        message: "城墙格必须唯一",
+        path: ["walls", index],
+      });
+    }
+    wallKeys.add(key);
+    if (wall.x === CITY_GATE_TILE.x && wall.y === CITY_GATE_TILE.y) {
+      context.addIssue({
+        code: "custom",
+        message: "城墙不能占用城门格",
+        path: ["walls", index],
+      });
+    }
+    if (roadKeys.has(key)) {
+      context.addIssue({
+        code: "custom",
+        message: "城墙不能覆盖道路",
+        path: ["walls", index],
+      });
+    }
+    if (buildings.some((building) => tileIsInsideBuilding(wall, building))) {
+      context.addIssue({
+        code: "custom",
+        message: "城墙不能覆盖建筑",
+        path: ["walls", index],
+      });
+    }
   }
 }
 
 function houseHasRoadService(
   house: FootprintBuilding,
-  connected: Set<number>,
+  connected: Set<string>,
 ): boolean {
   return footprintBorderTiles(house).some((tile) =>
     connected.has(tileKey(tile)),
@@ -1580,9 +1787,10 @@ function validateResidentialWorld(
   households: HouseholdLike[],
   context: z.RefinementCtx,
   constants: ResidentialRuleConstants,
+  walls: TileCoordinate[] = [],
 ): void {
   validateBuildings(buildings, context);
-  validateRoadLayer(roads, buildings, context);
+  validateRoadLayer(roads, buildings, context, walls);
   const houses = buildings.filter(
     (building): building is ResidentialHouseBuilding =>
       building.typeId === "house" &&
@@ -1837,8 +2045,8 @@ export const legacyWorldSnapshotV5Schema = legacyWorldV5BaseSchema
 const migrantSchema = z
   .object({
     houseId: positiveSafeIntegerSchema,
-    x: tileCoordinateSchema.shape.x,
-    y: tileCoordinateSchema.shape.y,
+    x: safeCoordinateSchema,
+    y: safeCoordinateSchema,
     state: z.union([z.literal("walking"), z.literal("building")]),
   })
   .strict();
@@ -1854,22 +2062,91 @@ const foodQualitySchema = z.union([
 function normalizeCurrentHouseholds(value: unknown): unknown {
   if (!Array.isArray(value)) return value;
   return value.map((household) => {
-    if (
-      typeof household !== "object" ||
-      household === null ||
-      "foodQuality" in household
-    ) {
+    if (typeof household !== "object" || household === null) {
       return household;
     }
+    const foodReserveUnits =
+      "foodReserveUnits" in household
+        ? household.foodReserveUnits
+        : typeof household.residents === "number" &&
+            typeof household.foodReserveTicks === "number"
+          ? Math.ceil(household.residents / 5) * household.foodReserveTicks
+          : 0;
+    const foodReserveTicks =
+      typeof household.residents === "number" &&
+      typeof foodReserveUnits === "number"
+        ? Math.min(
+            3,
+            Math.floor(foodReserveUnits / Math.ceil(household.residents / 5)),
+          )
+        : 0;
     return {
+      cash: HOUSEHOLD_STARTING_CASH,
+      employedWorkers: 0,
+      lastIncome: 0,
+      lastFoodExpense: 0,
+      wageArrears: 0,
+      taxArrears: 0,
+      foodShortageReason: "none",
+      livelihoodLedger: [],
       ...household,
-      foodQuality:
-        "foodReserveTicks" in household && household.foodReserveTicks === 0
-          ? "none"
-          : "bland",
+      foodReserveUnits,
+      foodReserveTicks,
+      ...(!("foodQuality" in household)
+        ? {
+            foodQuality:
+              "foodReserveTicks" in household &&
+              household.foodReserveTicks === 0
+                ? "none"
+                : "bland",
+          }
+        : {}),
     };
   });
 }
+
+const foodShortageReasonSchema = z.union([
+  z.literal("none"),
+  z.literal("delivery-pending"),
+  z.literal("unaffordable"),
+  z.literal("out-of-stock"),
+  z.literal("disconnected"),
+  z.literal("no-market"),
+]);
+
+const livelihoodLedgerKindSchema = z.union([
+  z.literal("arrival-funds"),
+  z.literal("wage"),
+  z.literal("wage-arrears"),
+  z.literal("tax"),
+  z.literal("tax-arrears"),
+  z.literal("food-order"),
+  z.literal("food-delivery"),
+  z.literal("food-refund"),
+]);
+
+const livelihoodLedgerEntrySchema = z
+  .object({
+    id: z.string().min(1),
+    tick: nonnegativeSafeIntegerSchema,
+    kind: livelihoodLedgerKindSchema,
+    amount: z.number().int().safe(),
+    balanceAfter: nonnegativeSafeIntegerSchema,
+  })
+  .strict();
+
+const householdFoodOrderSchema = z
+  .object({
+    houseId: positiveSafeIntegerSchema,
+    marketId: positiveSafeIntegerSchema,
+    cropType: cropTypeSchema,
+    foodQuality: foodQualitySchema,
+    quantity: positiveSafeIntegerSchema.default(1),
+    price: positiveSafeIntegerSchema,
+    placedAtTick: nonnegativeSafeIntegerSchema,
+    arrivesAtTick: nonnegativeSafeIntegerSchema,
+  })
+  .strict();
 
 function validateConstructionMigrants(
   buildings: BuildingView[],
@@ -2086,7 +2363,9 @@ function validateCitizens(
 
 export const worldSnapshotSchema = worldBaseSchema
   .extend({
-    roads: z.array(tileCoordinateSchema),
+    roads: z.array(worldTileCoordinateSchema),
+    clearedVegetation: z.array(worldTileCoordinateSchema).optional(),
+    walls: z.array(worldTileCoordinateSchema).optional(),
     households: z.preprocess(
       normalizeCurrentHouseholds,
       z.array(
@@ -2100,6 +2379,7 @@ export const worldSnapshotSchema = worldBaseSchema
               z.literal(2),
               z.literal(HOUSEHOLD_FOOD_RESERVE_MAX),
             ]),
+            foodReserveUnits: nonnegativeSafeIntegerSchema,
             foodQuality: foodQualitySchema,
             clothingReserveTicks: z
               .union([
@@ -2117,10 +2397,21 @@ export const worldSnapshotSchema = worldBaseSchema
                 z.literal(HOUSEHOLD_FOOD_RESERVE_MAX),
               ])
               .optional(),
+            cash: nonnegativeSafeIntegerSchema,
+            employedWorkers: nonnegativeSafeIntegerSchema,
+            lastIncome: nonnegativeSafeIntegerSchema,
+            lastFoodExpense: nonnegativeSafeIntegerSchema,
+            wageArrears: nonnegativeSafeIntegerSchema,
+            taxArrears: nonnegativeSafeIntegerSchema,
+            foodShortageReason: foodShortageReasonSchema,
+            livelihoodLedger: z
+              .array(livelihoodLedgerEntrySchema)
+              .max(HOUSEHOLD_LEDGER_LIMIT),
           })
           .strict(),
       ),
     ),
+    householdFoodOrders: z.array(householdFoodOrderSchema).optional(),
     migrants: z.array(migrantSchema),
   })
   .strict()
@@ -2136,7 +2427,9 @@ export const worldSnapshotSchema = worldBaseSchema
         wellServiceRange: WELL_SERVICE_RANGE,
         requireFoodReserve: true,
       },
+      world.walls ?? [],
     );
+    validateWallLayer(world.walls ?? [], world.roads, world.buildings, context);
     validateFoodStockBreakdown(world.buildings, context);
     validateConstructionMigrants(
       world.buildings,
@@ -2157,6 +2450,76 @@ export const worldSnapshotSchema = worldBaseSchema
       world.citizens ?? [],
       context,
     );
+    const householdsById = new Set(
+      world.households.map((household) => household.houseId),
+    );
+    const marketIds = new Set(
+      world.buildings
+        .filter((building) => building.typeId === "market")
+        .map((market) => market.id),
+    );
+    const orderedHouseholds = new Set<number>();
+    const expectedFoodOrderEscrow = (world.householdFoodOrders ?? []).reduce(
+      (total, order) => total + order.price,
+      0,
+    );
+    if ((world.economy?.foodOrderEscrow ?? 0) !== expectedFoodOrderEscrow) {
+      context.addIssue({
+        code: "custom",
+        message: "口粮订单托管金必须与全部在途订单金额一致",
+        path: ["economy", "foodOrderEscrow"],
+      });
+    }
+    for (const [index, order] of (world.householdFoodOrders ?? []).entries()) {
+      if (!householdsById.has(order.houseId)) {
+        context.addIssue({
+          code: "custom",
+          message: "口粮订单必须引用现存家庭",
+          path: ["householdFoodOrders", index, "houseId"],
+        });
+      }
+      if (!marketIds.has(order.marketId)) {
+        context.addIssue({
+          code: "custom",
+          message: "口粮订单必须引用现存市场",
+          path: ["householdFoodOrders", index, "marketId"],
+        });
+      }
+      if (orderedHouseholds.has(order.houseId)) {
+        context.addIssue({
+          code: "custom",
+          message: "每户最多一笔在途口粮订单",
+          path: ["householdFoodOrders", index, "houseId"],
+        });
+      }
+      if (order.arrivesAtTick <= order.placedAtTick) {
+        context.addIssue({
+          code: "custom",
+          message: "口粮订单到达时间必须晚于下单时间",
+          path: ["householdFoodOrders", index, "arrivesAtTick"],
+        });
+      }
+      orderedHouseholds.add(order.houseId);
+    }
+    for (const [householdIndex, household] of world.households.entries()) {
+      const ledgerIds = new Set<string>();
+      for (const [entryIndex, entry] of household.livelihoodLedger.entries()) {
+        if (ledgerIds.has(entry.id)) {
+          context.addIssue({
+            code: "custom",
+            message: "家庭生计流水标识必须唯一",
+            path: [
+              "households",
+              householdIndex,
+              "livelihoodLedger",
+              entryIndex,
+              "id",
+            ],
+          });
+        }
+        ledgerIds.add(entry.id);
+      }
+    }
   });
 
 const saveEnvelopeV1Schema = z
@@ -2195,6 +2558,82 @@ const saveEnvelopeV6Schema = z
     world: worldSnapshotSchema,
   })
   .strict();
+const worldSnapshotV7Schema = worldSnapshotSchema.superRefine(
+  (world, context) => {
+    if (world.walls === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "v7 存档必须显式携带城墙层",
+        path: ["walls"],
+      });
+    }
+  },
+);
+const saveEnvelopeV7Schema = z
+  .object({
+    saveFormatVersion: z.literal(7),
+    world: worldSnapshotV7Schema,
+  })
+  .strict();
+const worldSnapshotV8Schema = worldSnapshotSchema.superRefine(
+  (world, context) => {
+    if (world.walls === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "v8 存档必须显式携带城墙层",
+        path: ["walls"],
+      });
+    }
+    if (world.terrain === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "v8 存档必须显式携带地形契约",
+        path: ["terrain"],
+      });
+      return;
+    }
+    for (const [index, building] of world.buildings.entries()) {
+      if (
+        !isFootprintBuildableOnTerrain(
+          building.x,
+          building.y,
+          building.footprint.width,
+          building.footprint.height,
+          world.terrain,
+        )
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "建筑必须完整位于可建设土地",
+          path: ["buildings", index],
+        });
+      }
+    }
+    for (const layer of ["roads", "walls"] as const) {
+      for (const [index, tile] of (world[layer] ?? []).entries()) {
+        if (!isTileInsideTerrain(tile, world.terrain)) {
+          context.addIssue({
+            code: "custom",
+            message: `${layer === "roads" ? "道路" : "城墙"}必须位于地形边界内`,
+            path: [layer, index],
+          });
+        }
+      }
+    }
+  },
+);
+const saveEnvelopeV8Schema = z
+  .object({
+    saveFormatVersion: z.literal(8),
+    world: worldSnapshotV8Schema,
+  })
+  .strict();
+const saveEnvelopeV9Schema = z
+  .object({
+    saveFormatVersion: z.literal(9),
+    world: worldSnapshotV8Schema,
+  })
+  .strict();
 
 export const saveEnvelopeSchema = z.discriminatedUnion("saveFormatVersion", [
   saveEnvelopeV1Schema,
@@ -2203,6 +2642,9 @@ export const saveEnvelopeSchema = z.discriminatedUnion("saveFormatVersion", [
   saveEnvelopeV4Schema,
   saveEnvelopeV5Schema,
   saveEnvelopeV6Schema,
+  saveEnvelopeV7Schema,
+  saveEnvelopeV8Schema,
+  saveEnvelopeV9Schema,
 ]);
 
 export const workerRequestSchema = z.discriminatedUnion("type", [
@@ -2351,22 +2793,57 @@ function migrateV5WorldToV6(world: LegacyWorldSnapshotV5): WorldSnapshot {
   });
 }
 
+function migrateV6WorldToV7(world: WorldSnapshot): WorldSnapshot {
+  return worldSnapshotSchema.parse({
+    ...world,
+    walls: [],
+  });
+}
+
+function migrateV7WorldToV8(world: WorldSnapshot): WorldSnapshot {
+  return worldSnapshotV8Schema.parse({
+    ...world,
+    walls: world.walls ?? [],
+    terrain: world.terrain ?? { ...DEFAULT_TERRAIN_CONTRACT },
+  });
+}
+
 export function upgradeSaveEnvelope(envelope: SaveEnvelope): WorldSnapshot {
   switch (envelope.saveFormatVersion) {
+    case 9:
+      return worldSnapshotV8Schema.parse(envelope.world);
+    case 8:
+      return worldSnapshotV8Schema.parse(envelope.world);
+    case 7:
+      return migrateV7WorldToV8(worldSnapshotSchema.parse(envelope.world));
     case 6:
-      return worldSnapshotSchema.parse(envelope.world);
+      return migrateV7WorldToV8(migrateV6WorldToV7(envelope.world));
     case 5:
-      return migrateV5WorldToV6(envelope.world);
+      return migrateV7WorldToV8(
+        migrateV6WorldToV7(migrateV5WorldToV6(envelope.world)),
+      );
     case 4:
-      return migrateV5WorldToV6(migrateV4WorldToV5(envelope.world));
+      return migrateV7WorldToV8(
+        migrateV6WorldToV7(
+          migrateV5WorldToV6(migrateV4WorldToV5(envelope.world)),
+        ),
+      );
     case 3:
-      return migrateV5WorldToV6(
-        migrateV4WorldToV5(migrateV3WorldToV4(envelope.world)),
+      return migrateV7WorldToV8(
+        migrateV6WorldToV7(
+          migrateV5WorldToV6(
+            migrateV4WorldToV5(migrateV3WorldToV4(envelope.world)),
+          ),
+        ),
       );
     case 2:
-      return migrateV5WorldToV6(
-        migrateV4WorldToV5(
-          migrateV3WorldToV4(migrateLegacyWorldToV3(envelope.world)),
+      return migrateV7WorldToV8(
+        migrateV6WorldToV7(
+          migrateV5WorldToV6(
+            migrateV4WorldToV5(
+              migrateV3WorldToV4(migrateLegacyWorldToV3(envelope.world)),
+            ),
+          ),
         ),
       );
     case 1: {
@@ -2375,26 +2852,34 @@ export function upgradeSaveEnvelope(envelope: SaveEnvelope): WorldSnapshot {
         roads: [],
         households: [],
       };
-      return migrateV5WorldToV6(
-        migrateV4WorldToV5(
-          migrateV3WorldToV4(migrateLegacyWorldToV3(legacyWorldV2)),
+      return migrateV7WorldToV8(
+        migrateV6WorldToV7(
+          migrateV5WorldToV6(
+            migrateV4WorldToV5(
+              migrateV3WorldToV4(migrateLegacyWorldToV3(legacyWorldV2)),
+            ),
+          ),
         ),
       );
     }
   }
 }
 
-export function createSaveEnvelope(snapshot: WorldSnapshot): SaveEnvelopeV6 {
-  return saveEnvelopeV6Schema.parse({
+export function createSaveEnvelope(snapshot: WorldSnapshot): SaveEnvelopeV9 {
+  return saveEnvelopeV9Schema.parse({
     saveFormatVersion: SAVE_FORMAT_VERSION,
-    world: snapshot,
+    world: {
+      ...snapshot,
+      walls: snapshot.walls ?? [],
+      terrain: snapshot.terrain ?? { ...DEFAULT_TERRAIN_CONTRACT },
+    },
   });
 }
 
 export interface DecodedSaveEnvelope {
-  sourceVersion: 1 | 2 | 3 | 4 | 5 | 6;
+  sourceVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   snapshot: WorldSnapshot;
-  envelope: SaveEnvelopeV6;
+  envelope: SaveEnvelopeV9;
 }
 
 export function decodeSaveEnvelope(value: unknown): DecodedSaveEnvelope {

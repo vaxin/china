@@ -25,6 +25,14 @@ function buildHouseWithRoad(houseX = 1, roadTiles = [{ x: 0, y: 15 }]) {
   return world;
 }
 
+function advanceActivity(world: ReturnType<typeof createWorld>, pulses = 1) {
+  applyCommand(world, {
+    seq: 1_000 + world.revision,
+    type: "advance-activity",
+    pulses,
+  });
+}
+
 describe("宅基地、流民与施工状态机", () => {
   it("合法住宅先落为宅基地且没有流民或住户", () => {
     const world = createWorld();
@@ -56,9 +64,9 @@ describe("宅基地、流民与施工状态机", () => {
       migrants: [{ houseId: 1, x: 0, y: 15, state: "walking" }],
     });
 
-    advanceTicks(world, 1);
+    advanceActivity(world);
     expect(snapshotWorld(world)).toMatchObject({
-      tick: 2,
+      tick: 1,
       buildings: [{ constructionStage: 1 }],
       households: [],
       migrants: [{ houseId: 1, x: 0, y: 15, state: "building" }],
@@ -66,7 +74,7 @@ describe("宅基地、流民与施工状态机", () => {
 
     advanceTicks(world, 2);
     expect(snapshotWorld(world)).toMatchObject({
-      tick: 4,
+      tick: 3,
       buildings: [{ constructionStage: 3 }],
       households: [],
       migrants: [{ houseId: 1, state: "building" }],
@@ -74,14 +82,14 @@ describe("宅基地、流民与施工状态机", () => {
 
     advanceTicks(world, 1);
     expect(snapshotWorld(world)).toMatchObject({
-      tick: 5,
+      tick: 4,
       buildings: [{ constructionStage: 4, level: 1 }],
       households: [{ houseId: 1, residents: 5, foodReserveTicks: 3 }],
       migrants: [],
     });
   });
 
-  it("较远住宅的流民每 tick 只前进一个正交道路格", () => {
+  it("较远住宅的流民每个活动节拍只前进一个正交道路格", () => {
     const roads = [
       { x: 0, y: 15 },
       { x: 1, y: 15 },
@@ -93,11 +101,11 @@ describe("宅基地、流民与施工状态机", () => {
     expect(snapshotWorld(world).migrants).toEqual([
       { houseId: 1, x: 0, y: 15, state: "walking" },
     ]);
-    advanceTicks(world, 1);
+    advanceActivity(world);
     expect(snapshotWorld(world).migrants).toEqual([
       { houseId: 1, x: 1, y: 15, state: "walking" },
     ]);
-    advanceTicks(world, 1);
+    advanceActivity(world);
     expect(snapshotWorld(world).migrants).toEqual([
       { houseId: 1, x: 2, y: 15, state: "walking" },
     ]);
@@ -115,8 +123,10 @@ describe("宅基地、流民与施工状态机", () => {
     const forward = buildHouseWithRoad(3, roads);
     const reversed = buildHouseWithRoad(3, [...roads].reverse());
 
-    advanceTicks(forward, 3);
-    advanceTicks(reversed, 3);
+    advanceTicks(forward, 1);
+    advanceTicks(reversed, 1);
+    advanceActivity(forward, 2);
+    advanceActivity(reversed, 2);
 
     expect(snapshotWorld(reversed).migrants).toEqual(
       snapshotWorld(forward).migrants,
@@ -129,7 +139,8 @@ describe("宅基地、流民与施工状态机", () => {
       { x: 1, y: 15 },
       { x: 2, y: 15 },
     ]);
-    advanceTicks(world, 2);
+    advanceTicks(world, 1);
+    advanceActivity(world);
     expect(snapshotWorld(world).migrants[0]).toMatchObject({ x: 1, y: 15 });
 
     applyCommand(world, { seq: 3, type: "demolish", x: 1, y: 15 });

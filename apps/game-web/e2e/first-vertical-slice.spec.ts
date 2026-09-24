@@ -210,12 +210,12 @@ test("S-05 地图边界外不能产生建筑", async ({ page }) => {
   const canvas = page.getByTestId("game-canvas");
 
   await canvas.focus();
-  for (let index = 0; index < 15; index += 1) {
+  for (let index = 0; index < 47; index += 1) {
     await page.keyboard.press("ArrowRight");
     await page.keyboard.press("ArrowDown");
   }
   await expect(page.getByTestId("keyboard-tile")).toHaveText(
-    "键盘选中地格 31,31",
+    "键盘选中地格 63,63",
   );
   await page.keyboard.press("Enter");
 

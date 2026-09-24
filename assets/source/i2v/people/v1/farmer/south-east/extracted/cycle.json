@@ -1,0 +1,88 @@
+{
+  "video": "assets/source/i2v/people/v1/farmer/south-east/raw.mp4",
+  "sourceFrameCount": 121,
+  "fps": 24.0,
+  "cycleStartFrame": 76,
+  "cyclePeriodFrames": 24,
+  "cycleDurationSeconds": 1.0,
+  "selectedSourceFrames": [
+    76,
+    79,
+    82,
+    85,
+    88,
+    91,
+    94,
+    97
+  ],
+  "bestPeriodScore": 0.0006054973928257823,
+  "nextBestPeriod": {
+    "frames": 23,
+    "score": 0.004039364866912365
+  },
+  "adjacentFrameDifferences": [
+    0.010859642177820206,
+    0.018589116632938385,
+    0.01602688618004322,
+    0.008677678182721138,
+    0.011539162136614323,
+    0.014969587326049805,
+    0.014776831492781639,
+    0.011495948769152164
+  ],
+  "foregroundBounds": [
+    [
+      93,
+      28,
+      179,
+      244
+    ],
+    [
+      94,
+      27,
+      168,
+      246
+    ],
+    [
+      89,
+      24,
+      173,
+      244
+    ],
+    [
+      81,
+      25,
+      183,
+      244
+    ],
+    [
+      79,
+      28,
+      187,
+      247
+    ],
+    [
+      84,
+      27,
+      181,
+      248
+    ],
+    [
+      92,
+      24,
+      168,
+      246
+    ],
+    [
+      96,
+      25,
+      164,
+      244
+    ]
+  ],
+  "outputs": {
+    "sheet": "assets/source/i2v/people/v1/farmer/south-east/extracted/cycle-1x8.png",
+    "contact": "assets/source/i2v/people/v1/farmer/south-east/extracted/contact.png",
+    "gif": "assets/source/i2v/people/v1/farmer/south-east/extracted/cycle.gif"
+  }
+}

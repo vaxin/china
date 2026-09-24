@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("UX-TIME-01 暂停冻结权威 tick，4× 每秒推进四个月", async ({ page }) => {
+test("UX-TIME-01 暂停冻结权威 tick，4× 每 2.5 秒推进一个月", async ({
+  page,
+}) => {
   await page.goto("/");
   await expect(page.getByTestId("game-status")).toHaveText("游戏已就绪");
 
@@ -24,9 +26,9 @@ test("UX-TIME-01 暂停冻结权威 tick，4× 每秒推进四个月", async ({ 
       async () =>
         tickValue(await page.getByTestId("simulation-tick").innerText()) -
         pausedAt,
-      { timeout: 2_000 },
+      { timeout: 4_000 },
     )
-    .toBeGreaterThanOrEqual(4);
+    .toBeGreaterThanOrEqual(1);
 });
 
 function tickValue(label: string) {

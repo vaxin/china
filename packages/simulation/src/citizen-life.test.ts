@@ -33,11 +33,25 @@ function buildHomeAndWell() {
   return world;
 }
 
-describe("入住市民的连续生活与工作", () => {
-  it("住宅完成入住的同一 tick 产生一名位于门前道路的市民代表", () => {
+function advanceActivity(world: ReturnType<typeof createWorld>, pulses = 1) {
+  applyCommand(world, {
+    seq: 1_000 + world.revision,
+    type: "advance-activity",
+    pulses,
+  });
+}
+
+function completeHome(world: ReturnType<typeof createWorld>) {
+  advanceTicks(world, 1);
+  advanceActivity(world, 2);
+  advanceTicks(world, 3);
+}
+
+describe("citizen life and work", () => {
+  it("spawns a citizen on the road after house completes", () => {
     const world = buildHomeAndWell();
 
-    advanceTicks(world, 6);
+    completeHome(world);
 
     expect(snapshotWorld(world)).toMatchObject({
       households: [{ houseId: 1, residents: 5 }],
@@ -55,37 +69,38 @@ describe("入住市民的连续生活与工作", () => {
     });
   });
 
-  it("市民逐格上工、停留工作，再逐格返家而不是瞬移", () => {
+  it("citizen walks to work, works inside the building, then walks home and enters house", () => {
     const world = buildHomeAndWell();
-    advanceTicks(world, 6);
+    completeHome(world);
 
-    advanceTicks(world, 4);
+    advanceActivity(world, 4);
     expect(snapshotWorld(world)).toMatchObject({
       citizens: [{ x: 5, y: 15, state: "commuting" }],
     });
 
-    advanceTicks(world, 1);
+    advanceActivity(world, 1);
     expect(snapshotWorld(world)).toMatchObject({
-      citizens: [{ x: 6, y: 14, state: "working", dwellTicks: 1 }],
+      citizens: [{ x: 6, y: 14, state: "working", dwellTicks: 6 }],
     });
 
-    advanceTicks(world, 2);
+    advanceActivity(world, 7);
     expect(snapshotWorld(world)).toMatchObject({
       citizens: [{ x: 5, y: 15, state: "returning" }],
     });
   });
 
-  it("途中断路不会让市民穿越空地，补路后恢复通勤", () => {
+  it("broken road sends citizen home instead of walking through empty land", () => {
     const world = buildHomeAndWell();
-    advanceTicks(world, 8);
+    completeHome(world);
+    advanceActivity(world, 2);
     expect(snapshotWorld(world)).toMatchObject({
       citizens: [{ x: 3, y: 15, state: "commuting" }],
     });
 
     applyCommand(world, { seq: 4, type: "demolish", x: 4, y: 15 });
-    advanceTicks(world, 1);
+    advanceActivity(world, 1);
     expect(snapshotWorld(world)).toMatchObject({
-      citizens: [{ x: 2, y: 15, state: "strolling" }],
+      citizens: [{ x: 1, y: 13, state: "resting" }],
     });
 
     applyCommand(world, {
@@ -93,20 +108,20 @@ describe("入住市民的连续生活与工作", () => {
       type: "build-road-path",
       tiles: [{ x: 4, y: 15 }],
     });
-    advanceTicks(world, 4);
+    advanceActivity(world, 10);
     expect(snapshotWorld(world)).toMatchObject({
       citizens: [{ state: "working", x: 6, y: 14 }],
     });
   });
 
-  it("拆除住宅会清理市民，拆除岗位会重新分配为无业活动", () => {
+  it("demolishing workplace reassigns citizen to idle, demolishing house cleans up citizen", () => {
     const world = buildHomeAndWell();
-    advanceTicks(world, 6);
+    completeHome(world);
 
     applyCommand(world, { seq: 4, type: "demolish", x: 6, y: 14 });
-    advanceTicks(world, 1);
+    advanceActivity(world, 1);
     expect(snapshotWorld(world)).toMatchObject({
-      citizens: [{ workplaceId: null, state: "strolling" }],
+      citizens: [{ workplaceId: null, state: "resting" }],
     });
 
     applyCommand(world, { seq: 5, type: "demolish", x: 1, y: 13 });

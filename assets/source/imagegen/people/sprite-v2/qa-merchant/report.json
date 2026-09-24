@@ -1,0 +1,635 @@
+{
+  "passed": true,
+  "sheet": "assets/source/imagegen/people/sprite-v2/merchant-walk-4x8-alpha.png",
+  "sheetSize": [
+    2048,
+    1024
+  ],
+  "grid": {
+    "rows": 4,
+    "columns": 8
+  },
+  "cellSize": [
+    256,
+    256
+  ],
+  "medianBaseline": 243.0,
+  "maximumBaselineDeviation": 0.0,
+  "medianSpriteHeight": 205.0,
+  "maximumHeightDrift": 0.004878048780487805,
+  "frames": [
+    [
+      {
+        "direction": "south-east",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-east-0.png",
+        "coverage": 0.1762,
+        "bbox": [
+          79,
+          39,
+          179,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-east",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-east-1.png",
+        "coverage": 0.1748,
+        "bbox": [
+          67,
+          39,
+          165,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-east",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-east-2.png",
+        "coverage": 0.1578,
+        "bbox": [
+          63,
+          39,
+          154,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-east",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-east-3.png",
+        "coverage": 0.1784,
+        "bbox": [
+          57,
+          39,
+          161,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-east",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-east-4.png",
+        "coverage": 0.1758,
+        "bbox": [
+          48,
+          39,
+          155,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-east",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-east-5.png",
+        "coverage": 0.1769,
+        "bbox": [
+          35,
+          40,
+          136,
+          244
+        ],
+        "baseline": 243,
+        "height": 204
+      },
+      {
+        "direction": "south-east",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-east-6.png",
+        "coverage": 0.177,
+        "bbox": [
+          36,
+          40,
+          134,
+          244
+        ],
+        "baseline": 243,
+        "height": 204
+      },
+      {
+        "direction": "south-east",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-east-7.png",
+        "coverage": 0.1793,
+        "bbox": [
+          44,
+          39,
+          144,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      }
+    ],
+    [
+      {
+        "direction": "south-west",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-west-0.png",
+        "coverage": 0.1793,
+        "bbox": [
+          112,
+          39,
+          212,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-west",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-west-1.png",
+        "coverage": 0.177,
+        "bbox": [
+          121,
+          40,
+          219,
+          244
+        ],
+        "baseline": 243,
+        "height": 204
+      },
+      {
+        "direction": "south-west",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-west-2.png",
+        "coverage": 0.1769,
+        "bbox": [
+          119,
+          40,
+          220,
+          244
+        ],
+        "baseline": 243,
+        "height": 204
+      },
+      {
+        "direction": "south-west",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-west-3.png",
+        "coverage": 0.1758,
+        "bbox": [
+          101,
+          39,
+          208,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-west",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-west-4.png",
+        "coverage": 0.1784,
+        "bbox": [
+          94,
+          39,
+          198,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-west",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-west-5.png",
+        "coverage": 0.1578,
+        "bbox": [
+          102,
+          39,
+          193,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-west",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-west-6.png",
+        "coverage": 0.1748,
+        "bbox": [
+          91,
+          39,
+          189,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "south-west",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/south-west-7.png",
+        "coverage": 0.1762,
+        "bbox": [
+          77,
+          39,
+          177,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      }
+    ],
+    [
+      {
+        "direction": "north-west",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-west-0.png",
+        "coverage": 0.1875,
+        "bbox": [
+          77,
+          39,
+          184,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-west",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-west-1.png",
+        "coverage": 0.1845,
+        "bbox": [
+          77,
+          39,
+          171,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-west",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-west-2.png",
+        "coverage": 0.1606,
+        "bbox": [
+          67,
+          39,
+          160,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-west",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-west-3.png",
+        "coverage": 0.1719,
+        "bbox": [
+          56,
+          39,
+          155,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-west",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-west-4.png",
+        "coverage": 0.1822,
+        "bbox": [
+          40,
+          39,
+          146,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-west",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-west-5.png",
+        "coverage": 0.1788,
+        "bbox": [
+          26,
+          39,
+          134,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-west",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-west-6.png",
+        "coverage": 0.1593,
+        "bbox": [
+          46,
+          39,
+          136,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-west",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-west-7.png",
+        "coverage": 0.1759,
+        "bbox": [
+          45,
+          39,
+          148,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      }
+    ],
+    [
+      {
+        "direction": "north-east",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-east-0.png",
+        "coverage": 0.1638,
+        "bbox": [
+          93,
+          39,
+          188,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-east",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-east-1.png",
+        "coverage": 0.1789,
+        "bbox": [
+          74,
+          39,
+          172,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-east",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-east-2.png",
+        "coverage": 0.1814,
+        "bbox": [
+          74,
+          39,
+          170,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-east",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-east-3.png",
+        "coverage": 0.1677,
+        "bbox": [
+          66,
+          39,
+          161,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-east",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-east-4.png",
+        "coverage": 0.1789,
+        "bbox": [
+          41,
+          38,
+          154,
+          244
+        ],
+        "baseline": 243,
+        "height": 206
+      },
+      {
+        "direction": "north-east",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-east-5.png",
+        "coverage": 0.1801,
+        "bbox": [
+          31,
+          39,
+          142,
+          244
+        ],
+        "baseline": 243,
+        "height": 205
+      },
+      {
+        "direction": "north-east",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-east-6.png",
+        "coverage": 0.1785,
+        "bbox": [
+          49,
+          38,
+          145,
+          244
+        ],
+        "baseline": 243,
+        "height": 206
+      },
+      {
+        "direction": "north-east",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-merchant/frames/north-east-7.png",
+        "coverage": 0.1785,
+        "bbox": [
+          63,
+          40,
+          156,
+          244
+        ],
+        "baseline": 243,
+        "height": 204
+      }
+    ]
+  ],
+  "motion": [
+    {
+      "direction": "south-east",
+      "adjacentMaskIoU": [
+        0.5893,
+        0.7158,
+        0.5821,
+        0.6263,
+        0.5638,
+        0.9084,
+        0.6006,
+        0.2625
+      ],
+      "adjacentRgbDifference": [
+        0.232,
+        0.1929,
+        0.2174,
+        0.2027,
+        0.2246,
+        0.1203,
+        0.2113,
+        0.2593
+      ],
+      "meanMaskIoU": 0.6061,
+      "meanRgbDifference": 0.2075
+    },
+    {
+      "direction": "south-west",
+      "adjacentMaskIoU": [
+        0.6266,
+        0.9084,
+        0.5901,
+        0.5989,
+        0.5949,
+        0.7158,
+        0.5893,
+        0.2625
+      ],
+      "adjacentRgbDifference": [
+        0.2045,
+        0.1203,
+        0.2186,
+        0.2099,
+        0.2121,
+        0.1929,
+        0.232,
+        0.2593
+      ],
+      "meanMaskIoU": 0.6108,
+      "meanRgbDifference": 0.2062
+    },
+    {
+      "direction": "north-west",
+      "adjacentMaskIoU": [
+        0.6299,
+        0.6031,
+        0.6686,
+        0.6638,
+        0.545,
+        0.6332,
+        0.5613,
+        0.2706
+      ],
+      "adjacentRgbDifference": [
+        0.1902,
+        0.1919,
+        0.1708,
+        0.1779,
+        0.21,
+        0.1677,
+        0.1955,
+        0.2301
+      ],
+      "meanMaskIoU": 0.5719,
+      "meanRgbDifference": 0.1917
+    },
+    {
+      "direction": "north-east",
+      "adjacentMaskIoU": [
+        0.5451,
+        0.923,
+        0.6086,
+        0.6111,
+        0.6266,
+        0.7185,
+        0.628,
+        0.3099
+      ],
+      "adjacentRgbDifference": [
+        0.1975,
+        0.0911,
+        0.1887,
+        0.188,
+        0.193,
+        0.143,
+        0.1936,
+        0.2241
+      ],
+      "meanMaskIoU": 0.6213,
+      "meanRgbDifference": 0.1774
+    }
+  ],
+  "directionSimilarity": [
+    {
+      "rows": [
+        "south-east",
+        "south-west"
+      ],
+      "meanMaskIoU": 0.1406
+    },
+    {
+      "rows": [
+        "south-east",
+        "north-west"
+      ],
+      "meanMaskIoU": 0.5966
+    },
+    {
+      "rows": [
+        "south-east",
+        "north-east"
+      ],
+      "meanMaskIoU": 0.559
+    },
+    {
+      "rows": [
+        "south-west",
+        "north-west"
+      ],
+      "meanMaskIoU": 0.1782
+    },
+    {
+      "rows": [
+        "south-west",
+        "north-east"
+      ],
+      "meanMaskIoU": 0.2346
+    },
+    {
+      "rows": [
+        "north-west",
+        "north-east"
+      ],
+      "meanMaskIoU": 0.7062
+    }
+  ],
+  "previews": {
+    "contactSheet": "assets/source/imagegen/people/sprite-v2/qa-merchant/contact-sheet.png",
+    "gifs": [
+      "assets/source/imagegen/people/sprite-v2/qa-merchant/south-east.gif",
+      "assets/source/imagegen/people/sprite-v2/qa-merchant/south-west.gif",
+      "assets/source/imagegen/people/sprite-v2/qa-merchant/north-west.gif",
+      "assets/source/imagegen/people/sprite-v2/qa-merchant/north-east.gif"
+    ]
+  },
+  "errors": [],
+  "warnings": []
+}

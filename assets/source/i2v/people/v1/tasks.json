@@ -1,0 +1,42 @@
+{
+  "farmer/south-east": {
+    "taskId": "cgt-20260714141743-qw6pk",
+    "seed": 24071401,
+    "status": "verified"
+  },
+  "farmer/north-east": {
+    "taskId": "cgt-20260714143132-6lqjv",
+    "seed": 24071402,
+    "status": "verified"
+  },
+  "artisan/south-east": {
+    "taskId": "cgt-20260714143148-w8zln",
+    "seed": 24071403,
+    "status": "verified"
+  },
+  "artisan/north-east": {
+    "taskId": "cgt-20260714143151-zq6z5",
+    "seed": 24071404,
+    "status": "verified"
+  },
+  "merchant/south-east": {
+    "taskId": "cgt-20260714143153-9q8fs",
+    "seed": 24071405,
+    "status": "verified"
+  },
+  "merchant/north-east": {
+    "taskId": "cgt-20260714143155-4f8wh",
+    "seed": 24071406,
+    "status": "verified"
+  },
+  "official/south-east": {
+    "taskId": "cgt-20260714143156-g5zmc",
+    "seed": 24071407,
+    "status": "verified"
+  },
+  "official/north-east": {
+    "taskId": "cgt-20260714143158-sp5n6",
+    "seed": 24071408,
+    "status": "verified"
+  }
+}

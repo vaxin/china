@@ -1,0 +1,669 @@
+{
+  "passed": true,
+  "sheet": "apps/game-web/public/assets/runtime/v5/people/farmer-walk-4x8.png",
+  "sheetSize": [
+    2048,
+    1024
+  ],
+  "grid": {
+    "rows": 4,
+    "columns": 8
+  },
+  "cellSize": [
+    256,
+    256
+  ],
+  "medianBaseline": 243.0,
+  "maximumBaselineDeviation": 0.0,
+  "medianSpriteHeight": 220.0,
+  "maximumHeightDrift": 0.004545454545454545,
+  "medianBodyAxisX": 128.0,
+  "maximumBodyAxisDeviation": 0.5,
+  "frames": [
+    [
+      {
+        "direction": "south-east",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-east-0.png",
+        "coverage": 0.1814,
+        "bbox": [
+          84,
+          24,
+          185,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 127.61
+      },
+      {
+        "direction": "south-east",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-east-1.png",
+        "coverage": 0.1682,
+        "bbox": [
+          92,
+          24,
+          181,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-east-2.png",
+        "coverage": 0.16,
+        "bbox": [
+          95,
+          24,
+          164,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-east-3.png",
+        "coverage": 0.1577,
+        "bbox": [
+          90,
+          25,
+          189,
+          244
+        ],
+        "baseline": 243,
+        "height": 219,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-east-4.png",
+        "coverage": 0.1631,
+        "bbox": [
+          87,
+          23,
+          192,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-east-5.png",
+        "coverage": 0.1646,
+        "bbox": [
+          89,
+          23,
+          188,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-east-6.png",
+        "coverage": 0.1603,
+        "bbox": [
+          96,
+          24,
+          183,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-east-7.png",
+        "coverage": 0.181,
+        "bbox": [
+          83,
+          24,
+          183,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      }
+    ],
+    [
+      {
+        "direction": "south-west",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-west-0.png",
+        "coverage": 0.1717,
+        "bbox": [
+          68,
+          23,
+          169,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-west",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-west-1.png",
+        "coverage": 0.1668,
+        "bbox": [
+          74,
+          24,
+          175,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-west",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-west-2.png",
+        "coverage": 0.1579,
+        "bbox": [
+          83,
+          24,
+          176,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-west",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-west-3.png",
+        "coverage": 0.1621,
+        "bbox": [
+          64,
+          23,
+          173,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-west",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-west-4.png",
+        "coverage": 0.1676,
+        "bbox": [
+          64,
+          23,
+          171,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-west",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-west-5.png",
+        "coverage": 0.1642,
+        "bbox": [
+          68,
+          24,
+          169,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-west",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-west-6.png",
+        "coverage": 0.1578,
+        "bbox": [
+          85,
+          24,
+          176,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-west",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/south-west-7.png",
+        "coverage": 0.1627,
+        "bbox": [
+          77,
+          25,
+          175,
+          244
+        ],
+        "baseline": 243,
+        "height": 219,
+        "bodyAxisX": 128.5
+      }
+    ],
+    [
+      {
+        "direction": "north-west",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-west-0.png",
+        "coverage": 0.1667,
+        "bbox": [
+          75,
+          24,
+          168,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-west",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-west-1.png",
+        "coverage": 0.1823,
+        "bbox": [
+          77,
+          24,
+          173,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-west",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-west-2.png",
+        "coverage": 0.1761,
+        "bbox": [
+          78,
+          24,
+          167,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-west",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-west-3.png",
+        "coverage": 0.1774,
+        "bbox": [
+          68,
+          24,
+          171,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-west",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-west-4.png",
+        "coverage": 0.1744,
+        "bbox": [
+          65,
+          24,
+          171,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-west",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-west-5.png",
+        "coverage": 0.1785,
+        "bbox": [
+          66,
+          23,
+          171,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "north-west",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-west-6.png",
+        "coverage": 0.1818,
+        "bbox": [
+          77,
+          23,
+          173,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "north-west",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-west-7.png",
+        "coverage": 0.1796,
+        "bbox": [
+          70,
+          24,
+          171,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      }
+    ],
+    [
+      {
+        "direction": "north-east",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-east-0.png",
+        "coverage": 0.1631,
+        "bbox": [
+          94,
+          25,
+          171,
+          244
+        ],
+        "baseline": 243,
+        "height": 219,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-east",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-east-1.png",
+        "coverage": 0.1577,
+        "bbox": [
+          95,
+          24,
+          171,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "north-east",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-east-2.png",
+        "coverage": 0.1642,
+        "bbox": [
+          94,
+          23,
+          172,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "north-east",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-east-3.png",
+        "coverage": 0.1681,
+        "bbox": [
+          86,
+          23,
+          194,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-east",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-east-4.png",
+        "coverage": 0.1632,
+        "bbox": [
+          88,
+          24,
+          192,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-east",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-east-5.png",
+        "coverage": 0.165,
+        "bbox": [
+          93,
+          24,
+          191,
+          244
+        ],
+        "baseline": 243,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "north-east",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-east-6.png",
+        "coverage": 0.16,
+        "bbox": [
+          94,
+          23,
+          173,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "north-east",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/frames/north-east-7.png",
+        "coverage": 0.1609,
+        "bbox": [
+          94,
+          23,
+          170,
+          244
+        ],
+        "baseline": 243,
+        "height": 221,
+        "bodyAxisX": 128.0
+      }
+    ]
+  ],
+  "motion": [
+    {
+      "direction": "south-east",
+      "adjacentMaskIoU": [
+        0.8312,
+        0.7223,
+        0.6984,
+        0.8948,
+        0.9112,
+        0.8589,
+        0.7785,
+        0.8961
+      ],
+      "adjacentRgbDifference": [
+        0.1158,
+        0.1291,
+        0.1264,
+        0.0733,
+        0.0774,
+        0.083,
+        0.1281,
+        0.0772
+      ],
+      "meanMaskIoU": 0.8239,
+      "meanRgbDifference": 0.1013
+    },
+    {
+      "direction": "south-west",
+      "adjacentMaskIoU": [
+        0.8965,
+        0.8431,
+        0.7891,
+        0.9369,
+        0.9386,
+        0.7692,
+        0.8889,
+        0.8307
+      ],
+      "adjacentRgbDifference": [
+        0.0725,
+        0.0981,
+        0.107,
+        0.0613,
+        0.0515,
+        0.113,
+        0.0886,
+        0.0921
+      ],
+      "meanMaskIoU": 0.8616,
+      "meanRgbDifference": 0.0855
+    },
+    {
+      "direction": "north-west",
+      "adjacentMaskIoU": [
+        0.7539,
+        0.8919,
+        0.7762,
+        0.9294,
+        0.9625,
+        0.8144,
+        0.8529,
+        0.6808
+      ],
+      "adjacentRgbDifference": [
+        0.115,
+        0.0743,
+        0.1027,
+        0.0598,
+        0.0452,
+        0.0978,
+        0.0886,
+        0.14
+      ],
+      "meanMaskIoU": 0.8328,
+      "meanRgbDifference": 0.0904
+    },
+    {
+      "direction": "north-east",
+      "adjacentMaskIoU": [
+        0.89,
+        0.8309,
+        0.6997,
+        0.925,
+        0.887,
+        0.7451,
+        0.8941,
+        0.9054
+      ],
+      "adjacentRgbDifference": [
+        0.0702,
+        0.0873,
+        0.125,
+        0.0677,
+        0.0738,
+        0.1267,
+        0.0809,
+        0.068
+      ],
+      "meanMaskIoU": 0.8472,
+      "meanRgbDifference": 0.0874
+    }
+  ],
+  "directionSimilarity": [
+    {
+      "rows": [
+        "south-east",
+        "south-west"
+      ],
+      "meanMaskIoU": 0.7137
+    },
+    {
+      "rows": [
+        "south-east",
+        "north-west"
+      ],
+      "meanMaskIoU": 0.6452
+    },
+    {
+      "rows": [
+        "south-east",
+        "north-east"
+      ],
+      "meanMaskIoU": 0.7115
+    },
+    {
+      "rows": [
+        "south-west",
+        "north-west"
+      ],
+      "meanMaskIoU": 0.7317
+    },
+    {
+      "rows": [
+        "south-west",
+        "north-east"
+      ],
+      "meanMaskIoU": 0.6014
+    },
+    {
+      "rows": [
+        "north-west",
+        "north-east"
+      ],
+      "meanMaskIoU": 0.5685
+    }
+  ],
+  "previews": {
+    "contactSheet": "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/contact-sheet.png",
+    "gifs": [
+      "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/south-east.gif",
+      "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/south-west.gif",
+      "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/north-west.gif",
+      "assets/source/imagegen/people/sprite-v2/qa-runtime/farmer/north-east.gif"
+    ]
+  },
+  "errors": [],
+  "warnings": []
+}

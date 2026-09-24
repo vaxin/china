@@ -1,0 +1,88 @@
+{
+  "video": "assets/source/i2v/people/v1/artisan/south-east/raw.mp4",
+  "sourceFrameCount": 121,
+  "fps": 24.0,
+  "cycleStartFrame": 28,
+  "cyclePeriodFrames": 24,
+  "cycleDurationSeconds": 1.0,
+  "selectedSourceFrames": [
+    28,
+    31,
+    34,
+    37,
+    40,
+    43,
+    46,
+    49
+  ],
+  "bestPeriodScore": 0.0021628038957715034,
+  "nextBestPeriod": {
+    "frames": 23,
+    "score": 0.003352159634232521
+  },
+  "adjacentFrameDifferences": [
+    0.016886936500668526,
+    0.003957842942327261,
+    0.005705747287720442,
+    0.022052031010389328,
+    0.008203658275306225,
+    0.0065591176971793175,
+    0.013410212472081184,
+    0.006861778441816568
+  ],
+  "foregroundBounds": [
+    [
+      96,
+      21,
+      161,
+      240
+    ],
+    [
+      93,
+      24,
+      173,
+      240
+    ],
+    [
+      89,
+      25,
+      169,
+      243
+    ],
+    [
+      89,
+      24,
+      164,
+      242
+    ],
+    [
+      87,
+      21,
+      171,
+      237
+    ],
+    [
+      84,
+      23,
+      175,
+      241
+    ],
+    [
+      87,
+      24,
+      173,
+      244
+    ],
+    [
+      94,
+      22,
+      163,
+      242
+    ]
+  ],
+  "outputs": {
+    "sheet": "assets/source/i2v/people/v1/artisan/south-east/extracted/cycle-1x8.png",
+    "contact": "assets/source/i2v/people/v1/artisan/south-east/extracted/contact.png",
+    "gif": "assets/source/i2v/people/v1/artisan/south-east/extracted/cycle.gif"
+  }
+}

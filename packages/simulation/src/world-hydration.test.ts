@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { WorldSnapshot } from "@empire/protocol";
+import { DEFAULT_TERRAIN_CONTRACT, type WorldSnapshot } from "@empire/protocol";
 
 import { applyCommand, hydrateWorld, snapshotWorld } from "./index";
 
@@ -7,6 +7,7 @@ describe("世界恢复", () => {
   it("从存档恢复后保持建筑，并从已有最大 ID 之后继续建造", () => {
     const savedWorld = {
       map: { width: 32, height: 32 },
+      terrain: { ...DEFAULT_TERRAIN_CONTRACT },
       tick: 0,
       revision: 4,
       buildings: [
@@ -22,6 +23,7 @@ describe("世界恢复", () => {
         },
       ],
       roads: [],
+      walls: [],
       households: [],
       migrants: [],
     } satisfies WorldSnapshot;
@@ -46,6 +48,7 @@ describe("世界恢复", () => {
   it("最大安全实体 ID 耗尽后原子拒绝新建筑并保持可保存快照", () => {
     const savedWorld = {
       map: { width: 32, height: 32 },
+      terrain: { ...DEFAULT_TERRAIN_CONTRACT },
       tick: 0,
       revision: 1,
       buildings: [
@@ -61,6 +64,7 @@ describe("世界恢复", () => {
         },
       ],
       roads: [],
+      walls: [],
       households: [],
       migrants: [],
     } satisfies WorldSnapshot;
@@ -90,6 +94,7 @@ describe("世界恢复", () => {
       revision: 0,
       buildings: [],
       roads: [],
+      walls: [],
       households: [],
       migrants: [],
     });
@@ -114,6 +119,7 @@ describe("世界恢复", () => {
       revision: Number.MAX_SAFE_INTEGER,
       buildings: [],
       roads: [],
+      walls: [],
       households: [],
       migrants: [],
     });
@@ -142,6 +148,7 @@ describe("世界恢复", () => {
       revision: Number.MAX_SAFE_INTEGER - 1,
       buildings: [],
       roads: [],
+      walls: [],
       households: [],
       migrants: [],
     };

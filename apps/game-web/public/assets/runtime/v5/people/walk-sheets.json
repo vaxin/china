@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "rows": 4,
+  "columns": 8,
+  "cellWidth": 256,
+  "cellHeight": 256,
+  "directions": ["south-east", "south-west", "north-west", "north-east"],
+  "frames": [
+    "left-contact",
+    "left-down",
+    "left-pass",
+    "left-up",
+    "right-contact",
+    "right-down",
+    "right-pass",
+    "right-up"
+  ],
+  "frameDurationMs": 120,
+  "pivot": [0.5, 0.94921875],
+  "roles": {
+    "farmer": "farmer-walk-4x8.png",
+    "artisan": "artisan-walk-4x8.png",
+    "merchant": "merchant-walk-4x8.png",
+    "official": "official-walk-4x8.png"
+  }
+}

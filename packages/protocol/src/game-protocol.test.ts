@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_TERRAIN_CONTRACT,
   createSaveEnvelope,
   decodeSaveEnvelope,
   parseGameCommand,
@@ -8,6 +9,17 @@ import {
   parseWorkerRequest,
   upgradeSaveEnvelope,
 } from "./index";
+
+const householdLivelihoodDefaults = {
+  cash: 12,
+  employedWorkers: 0,
+  lastIncome: 0,
+  lastFoodExpense: 0,
+  wageArrears: 0,
+  taxArrears: 0,
+  foodShortageReason: "none" as const,
+  livelihoodLedger: [],
+};
 
 describe("游戏命令协议", () => {
   it("合法住宅建造命令可通过边界校验并保持字段值", () => {
@@ -99,6 +111,26 @@ describe("游戏命令协议", () => {
   it("合法拆除命令可穿过 Worker 结构边界", () => {
     const command = { seq: 11, type: "demolish", x: 4, y: 9 } as const;
     expect(parseGameCommand(command)).toEqual(command);
+  });
+
+  it("人物活动脉冲可独立穿过 Worker 协议边界", () => {
+    const command = {
+      seq: 12,
+      type: "advance-activity",
+      pulses: 1,
+    } as const;
+
+    expect(parseGameCommand(command)).toEqual(command);
+  });
+
+  it.each([0, 1.5, 11])("拒绝非法人物活动脉冲 %s", (pulses) => {
+    expect(() =>
+      parseGameCommand({
+        seq: 12,
+        type: "advance-activity",
+        pulses,
+      }),
+    ).toThrow();
   });
 
   it("合法工资与行业优先级策略可穿过协议边界", () => {
@@ -391,7 +423,7 @@ describe("存档协议", () => {
     ).toThrow(/分品类粮食库存/);
   });
 
-  it("版本 5 住宅升级到版本 6 时视为既有成屋且不生成流民", () => {
+  it("版本 5 住宅升级到版本 7 时视为既有成屋且不生成流民", () => {
     const decoded = decodeSaveEnvelope({
       saveFormatVersion: 5,
       world: {
@@ -423,7 +455,7 @@ describe("存档协议", () => {
         migrants: [],
         households: [{ houseId: 1, residents: 5, foodReserveTicks: 2 }],
       },
-      envelope: { saveFormatVersion: 6 },
+      envelope: { saveFormatVersion: 8 },
     });
   });
 
@@ -664,6 +696,8 @@ describe("存档协议", () => {
         },
       ],
       roads: [],
+      walls: [],
+      terrain: { ...DEFAULT_TERRAIN_CONTRACT },
       households: [],
       migrants: [],
     });
@@ -715,18 +749,21 @@ describe("存档协议", () => {
           constructionStage: 4,
         },
       ],
+      terrain: { ...DEFAULT_TERRAIN_CONTRACT },
       households: [
         {
           ...currentSave.world.households[0],
           foodReserveTicks: 3,
           foodQuality: "bland",
+          ...householdLivelihoodDefaults,
         },
       ],
+      walls: [],
       migrants: [],
     });
   });
 
-  it("版本 3 水井、二级住宅和 10 人住户迁移到版本 6 时补齐口粮与成屋状态", () => {
+  it("版本 3 水井、二级住宅和 10 人住户迁移到版本 7 时补齐口粮与成屋状态", () => {
     const currentSave = {
       saveFormatVersion: 3,
       world: {
@@ -762,6 +799,7 @@ describe("存档协议", () => {
     const upgraded = upgradeSaveEnvelope(parsed);
     const expectedWorld = {
       ...currentSave.world,
+      terrain: { ...DEFAULT_TERRAIN_CONTRACT },
       buildings: currentSave.world.buildings.map((building) =>
         building.typeId === "house"
           ? { ...building, constructionStage: 4 as const }
@@ -772,23 +810,25 @@ describe("存档协议", () => {
           ...currentSave.world.households[0],
           foodReserveTicks: 3,
           foodQuality: "bland",
+          ...householdLivelihoodDefaults,
         },
       ],
+      walls: [],
       migrants: [],
     };
     expect(upgraded).toEqual(expectedWorld);
     expect(createSaveEnvelope(upgraded)).toEqual({
-      saveFormatVersion: 6,
+      saveFormatVersion: 8,
       world: expectedWorld,
     });
     expect(decodeSaveEnvelope(currentSave)).toEqual({
       sourceVersion: 3,
       snapshot: expectedWorld,
-      envelope: { saveFormatVersion: 6, world: expectedWorld },
+      envelope: { saveFormatVersion: 8, world: expectedWorld },
     });
   });
 
-  it("版本 4 四类建筑迁移到版本 6 时补口粮并保持既有住宅为成屋", () => {
+  it("版本 4 四类建筑迁移到版本 7 时补口粮并保持既有住宅为成屋", () => {
     const currentSave = {
       saveFormatVersion: 4,
       world: {
@@ -838,6 +878,7 @@ describe("存档协议", () => {
     } as const;
     const expectedWorld = {
       ...currentSave.world,
+      terrain: { ...DEFAULT_TERRAIN_CONTRACT },
       buildings: currentSave.world.buildings.map((building) =>
         building.typeId === "house"
           ? { ...building, constructionStage: 4 as const }
@@ -861,8 +902,10 @@ describe("存档协议", () => {
           ...currentSave.world.households[0],
           foodReserveTicks: 3,
           foodQuality: "bland",
+          ...householdLivelihoodDefaults,
         },
       ],
+      walls: [],
       migrants: [],
     };
 
@@ -871,10 +914,10 @@ describe("存档协议", () => {
     expect(decoded).toEqual({
       sourceVersion: 4,
       snapshot: expectedWorld,
-      envelope: { saveFormatVersion: 6, world: expectedWorld },
+      envelope: { saveFormatVersion: 8, world: expectedWorld },
     });
     expect(createSaveEnvelope(decoded.snapshot)).toEqual({
-      saveFormatVersion: 6,
+      saveFormatVersion: 8,
       world: expectedWorld,
     });
   });
@@ -922,6 +965,7 @@ describe("存档协议", () => {
     const decoded = decodeSaveEnvelope(currentSave);
     const expectedWorld = {
       ...currentSave.world,
+      terrain: { ...DEFAULT_TERRAIN_CONTRACT },
       buildings: currentSave.world.buildings.map((building) =>
         building.typeId === "house"
           ? { ...building, constructionStage: 4 as const }
@@ -941,16 +985,18 @@ describe("存档协议", () => {
       households: currentSave.world.households.map((household) => ({
         ...household,
         foodQuality: "bland" as const,
+        ...householdLivelihoodDefaults,
       })),
+      walls: [],
       migrants: [],
     };
     expect(decoded).toEqual({
       sourceVersion: 5,
       snapshot: expectedWorld,
-      envelope: { saveFormatVersion: 6, world: expectedWorld },
+      envelope: { saveFormatVersion: 8, world: expectedWorld },
     });
     expect(createSaveEnvelope(decoded.snapshot)).toEqual({
-      saveFormatVersion: 6,
+      saveFormatVersion: 8,
       world: expectedWorld,
     });
   });

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowLeft, House, User, X } from "@phosphor-icons/react";
 import type {
   CitizenState,
   CitizenView,
@@ -17,6 +18,11 @@ import {
   migrationAttractiveness,
 } from "@empire/simulation";
 import { connectedRoadKeys, houseBorderTiles } from "./migration-diagnostics";
+import { HouseholdLivelihoodView } from "./HouseholdLivelihoodView";
+import {
+  foodShortageLabel,
+  householdLivelihoodView,
+} from "./livelihood-view-model";
 
 // ---- labels ----
 
@@ -137,7 +143,7 @@ export function PopulationDetailPanel({
           onClick={onClose}
           aria-label="关闭人口详情"
         >
-          ✕
+          <X size={16} weight="bold" aria-hidden="true" />
         </button>
         <div className="population-panel-inner">
           <button
@@ -145,7 +151,8 @@ export function PopulationDetailPanel({
             className="population-back-btn"
             onClick={() => setSelected(null)}
           >
-            ← 返回列表
+            <ArrowLeft size={14} aria-hidden="true" />
+            返回列表
           </button>
           <EntityDetail entity={selected} snapshot={snapshot} />
         </div>
@@ -164,10 +171,6 @@ export function PopulationDetailPanel({
       .map((h) => [h.id, h]),
   );
   const buildingsById = new Map(buildings.map((b) => [b.id, b]));
-  const householdsByHouse = new Map(
-    households.map((h) => [h.houseId, h]),
-  );
-
   return (
     <aside className="population-panel" aria-label="人口详情">
       <button
@@ -176,7 +179,7 @@ export function PopulationDetailPanel({
         onClick={onClose}
         aria-label="关闭人口详情"
       >
-        ✕
+        <X size={16} weight="bold" aria-hidden="true" />
       </button>
       <div className="population-panel-inner">
         {/* Migrants */}
@@ -225,10 +228,9 @@ export function PopulationDetailPanel({
                   <CitizenCard
                     key={citizen.id}
                     citizen={citizen}
-                    house={housesById.get(citizen.houseId)}
                     workplace={
                       citizen.workplaceId !== null
-                        ? buildingsById.get(citizen.workplaceId) ?? null
+                        ? (buildingsById.get(citizen.workplaceId) ?? null)
                         : null
                     }
                     onClick={() =>
@@ -238,7 +240,7 @@ export function PopulationDetailPanel({
                         house: housesById.get(citizen.houseId) ?? null,
                         workplace:
                           citizen.workplaceId !== null
-                            ? buildingsById.get(citizen.workplaceId) ?? null
+                            ? (buildingsById.get(citizen.workplaceId) ?? null)
                             : null,
                       })
                     }
@@ -335,7 +337,9 @@ function MigrantDetail({
   return (
     <div className="entity-detail">
       <h2 className="entity-detail-title">
-        <span className="population-card-icon" aria-hidden="true">🚶</span>
+        <span className="population-card-icon" aria-hidden="true">
+          🚶
+        </span>
         流民 · 住宅 #{migrant.houseId}
       </h2>
       <DetailRow label="状态" value={migrantStateLabel[migrant.state]} />
@@ -347,10 +351,7 @@ function MigrantDetail({
             label="施工阶段"
             value={constructionStageLabel[house.constructionStage]}
           />
-          <DetailRow
-            label="等级"
-            value={`${house.level} 级`}
-          />
+          <DetailRow label="等级" value={`${house.level} 级`} />
         </>
       )}
     </div>
@@ -371,7 +372,9 @@ function CitizenDetail({
   return (
     <div className="entity-detail">
       <h2 className="entity-detail-title">
-        <span className="population-card-icon" aria-hidden="true">👤</span>
+        <span className="population-card-icon" aria-hidden="true">
+          <User size={18} weight="duotone" />
+        </span>
         市民 #{citizen.id}
       </h2>
       <DetailRow label="状态" value={citizenStateLabel[citizen.state]} />
@@ -381,7 +384,11 @@ function CitizenDetail({
       )}
       <DetailRow
         label="所属住宅"
-        value={house ? `#${house.id} (${house.x}, ${house.y})` : `#${citizen.houseId}`}
+        value={
+          house
+            ? `#${house.id} (${house.x}, ${house.y})`
+            : `#${citizen.houseId}`
+        }
       />
       {house && (
         <>
@@ -424,18 +431,19 @@ function HouseholdDetail({
   return (
     <div className="entity-detail">
       <h2 className="entity-detail-title">
-        <span className="population-card-icon" aria-hidden="true">🏠</span>
+        <span className="population-card-icon" aria-hidden="true">
+          <House size={18} weight="duotone" />
+        </span>
         住户 #{household.houseId}
       </h2>
-      <DetailRow label="人口" value={`${household.residents} 人`} />
-      <DetailRow
-        label="口粮剩余"
-        value={
-          household.foodReserveTicks > 0
-            ? `${household.foodReserveTicks} tick`
-            : "耗尽"
-        }
+      <HouseholdLivelihoodView
+        household={household}
+        order={snapshot.householdFoodOrders?.find(
+          (order) => order.houseId === household.houseId,
+        )}
       />
+      <DetailRule />
+      <DetailRow label="人口" value={`${household.residents} 人`} />
       <DetailRow
         label="膳食品质"
         value={foodQualityLabel[household.foodQuality] ?? household.foodQuality}
@@ -497,12 +505,17 @@ function HouseDetail({
   return (
     <div className="entity-detail">
       <h2 className="entity-detail-title">
-        <span className="population-card-icon" aria-hidden="true">🏠</span>
+        <span className="population-card-icon" aria-hidden="true">
+          <House size={18} weight="duotone" />
+        </span>
         住宅 #{house.id}
       </h2>
 
       <DetailRow label="位置" value={`${house.x}, ${house.y}`} />
-      <DetailRow label="等级" value={`${house.level} 级 (${house.level === 2 ? "10" : "5"}人容量)`} />
+      <DetailRow
+        label="等级"
+        value={`${house.level} 级 (${house.level === 2 ? "10" : "5"}人容量)`}
+      />
       <DetailRow
         label="施工阶段"
         value={constructionStageLabel[house.constructionStage]}
@@ -523,40 +536,29 @@ function HouseDetail({
           okText="已覆盖"
           failText="未覆盖 — 8格内无水井"
         />
-        <ConditionRow
-          label="五行元素"
-          value={elementLabels[element]}
-        />
+        <ConditionRow label="五行元素" value={elementLabels[element]} />
         <ConditionRow
           label="风水格局"
-          value={`${fengShui.preferredElement} · ${{
-            harmonious: "吉 · 相合",
-            neutral: "平",
-            conflicting: "凶 · 相克",
-          }[fengShui.status]}`}
+          value={`${fengShui.preferredElement} · ${
+            {
+              harmonious: "吉 · 相合",
+              neutral: "平",
+              conflicting: "凶 · 相克",
+            }[fengShui.status]
+          }`}
         />
-        <ConditionRow
-          label="宜居度"
-          value={`${desirability.score}`}
-        />
+        <ConditionRow label="宜居度" value={`${desirability.score}`} />
       </div>
 
       {household && (
         <>
           <DetailRule />
           <h3 className="entity-detail-subtitle">当前住户</h3>
-          <DetailRow label="人口" value={`${household.residents} 人`} />
-          <DetailRow
-            label="口粮剩余"
-            value={
-              household.foodReserveTicks > 0
-                ? `${household.foodReserveTicks} tick`
-                : "耗尽"
-            }
-          />
-          <DetailRow
-            label="膳食品质"
-            value={foodQualityLabel[household.foodQuality] ?? household.foodQuality}
+          <HouseholdLivelihoodView
+            household={household}
+            order={snapshot.householdFoodOrders?.find(
+              (order) => order.houseId === household.houseId,
+            )}
           />
           {household.clothingReserveTicks !== undefined && (
             <DetailRow
@@ -645,12 +647,13 @@ function MigrationConditions({ info }: { info: MigrationInfo }) {
       </div>
       <div className="detail-meta">
         <DetailRow label="民心" value={`${info.sentiment}`} />
-        <DetailRow label="工资" value={wageLabel[info.wageLevel] ?? info.wageLevel} />
+        <DetailRow
+          label="工资"
+          value={wageLabel[info.wageLevel] ?? info.wageLevel}
+        />
       </div>
       {!info.canMigrate && (
-        <p className="detail-hint">
-          提高工资或改善民心可恢复迁入
-        </p>
+        <p className="detail-hint">提高工资或改善民心可恢复迁入</p>
       )}
     </div>
   );
@@ -740,11 +743,7 @@ function MigrantCard({
         <Row label="位置" value={`${migrant.x}, ${migrant.y}`} />
         <Row
           label="宅基地阶段"
-          value={
-            house
-              ? constructionStageLabel[house.constructionStage]
-              : "—"
-          }
+          value={house ? constructionStageLabel[house.constructionStage] : "—"}
         />
       </div>
     </li>
@@ -753,12 +752,10 @@ function MigrantCard({
 
 function CitizenCard({
   citizen,
-  house,
   workplace,
   onClick,
 }: {
   citizen: CitizenView;
-  house?: HouseBuildingView;
   workplace: { id: number; typeId: string } | null;
   onClick: () => void;
 }) {
@@ -778,7 +775,7 @@ function CitizenCard({
     >
       <div className="population-card-header">
         <span className="population-card-icon" aria-hidden="true">
-          👤
+          <User size={18} weight="duotone" />
         </span>
         <span className="population-card-label">市民 #{citizen.id}</span>
         <span className={`population-card-state ${citizen.state}`}>
@@ -809,6 +806,7 @@ function HouseholdCard({
   house?: HouseBuildingView;
   onClick: () => void;
 }) {
+  const livelihood = householdLivelihoodView(household);
   return (
     <li
       className="population-card household-card clickable-card"
@@ -825,19 +823,25 @@ function HouseholdCard({
     >
       <div className="population-card-header">
         <span className="population-card-icon" aria-hidden="true">
-          🏠
+          <House size={18} weight="duotone" />
         </span>
         <span className="population-card-label">住户 #{household.houseId}</span>
-        <span className="population-card-state">
-          {household.residents} 口人
+        <span
+          className={`population-card-state livelihood-card-state ${livelihood.tone}`}
+        >
+          {foodShortageLabel(household.foodShortageReason)}
         </span>
       </div>
       <div className="population-card-body">
-        <Row label="口粮" value={foodQualityLabel[household.foodQuality] ?? "—"} />
         <Row
-          label="位置"
-          value={house ? `${house.x}, ${house.y}` : "—"}
+          label="钱粮"
+          value={`${household.cash ?? 12} 钱 · ${household.foodReserveTicks} 月粮`}
         />
+        <Row
+          label="劳作"
+          value={`${household.employedWorkers ?? 0} 人 · 本月 +${household.lastIncome ?? 0}`}
+        />
+        <Row label="位置" value={house ? `${house.x}, ${house.y}` : "—"} />
       </div>
     </li>
   );

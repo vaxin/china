@@ -1,0 +1,202 @@
+{
+  "passed": true,
+  "sheet": "assets/source/i2v/people/v1/farmer/north-east/extracted/cycle-1x8-normalized.png",
+  "sheetSize": [
+    2048,
+    256
+  ],
+  "grid": {
+    "rows": 1,
+    "columns": 8
+  },
+  "cellSize": [
+    256,
+    256
+  ],
+  "medianBaseline": 248.0,
+  "maximumBaselineDeviation": 0.0,
+  "medianSpriteHeight": 220.0,
+  "maximumHeightDrift": 0.004545454545454545,
+  "medianBodyAxisX": 128.25,
+  "maximumBodyAxisDeviation": 0.75,
+  "frames": [
+    [
+      {
+        "direction": "south-east",
+        "frame": 0,
+        "file": "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/frames/south-east-0.png",
+        "coverage": 0.1593,
+        "bbox": [
+          86,
+          29,
+          188,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 1,
+        "file": "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/frames/south-east-1.png",
+        "coverage": 0.1608,
+        "bbox": [
+          89,
+          29,
+          180,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 2,
+        "file": "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/frames/south-east-2.png",
+        "coverage": 0.1601,
+        "bbox": [
+          95,
+          29,
+          172,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 3,
+        "file": "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/frames/south-east-3.png",
+        "coverage": 0.1577,
+        "bbox": [
+          97,
+          29,
+          172,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 4,
+        "file": "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/frames/south-east-4.png",
+        "coverage": 0.1585,
+        "bbox": [
+          99,
+          29,
+          183,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 5,
+        "file": "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/frames/south-east-5.png",
+        "coverage": 0.1606,
+        "bbox": [
+          95,
+          29,
+          175,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 6,
+        "file": "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/frames/south-east-6.png",
+        "coverage": 0.1631,
+        "bbox": [
+          92,
+          28,
+          177,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 7,
+        "file": "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/frames/south-east-7.png",
+        "coverage": 0.1588,
+        "bbox": [
+          87,
+          29,
+          185,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      }
+    ]
+  ],
+  "motion": [
+    {
+      "direction": "south-east",
+      "adjacentMaskIoU": [
+        0.798,
+        0.8235,
+        0.8645,
+        0.7887,
+        0.8125,
+        0.7894,
+        0.7506,
+        0.9163
+      ],
+      "adjacentLowerBodyIoU": [
+        0.7337,
+        0.7633,
+        0.8069,
+        0.6944,
+        0.7423,
+        0.6932,
+        0.6272,
+        0.8658
+      ],
+      "adjacentRgbDifference": [
+        0.1196,
+        0.1254,
+        0.0912,
+        0.1136,
+        0.1125,
+        0.1224,
+        0.1283,
+        0.0543
+      ],
+      "adjacentLowerBodyRgbDifference": [
+        0.137,
+        0.1603,
+        0.1196,
+        0.1464,
+        0.1414,
+        0.1574,
+        0.1715,
+        0.0704
+      ],
+      "meanMaskIoU": 0.8179,
+      "meanRgbDifference": 0.1084
+    }
+  ],
+  "directionSimilarity": [],
+  "previews": {
+    "contactSheet": "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/contact-sheet.png",
+    "gifs": [
+      "assets/source/i2v/people/v1/farmer/north-east/extracted/qa/south-east.gif"
+    ]
+  },
+  "errors": [],
+  "warnings": []
+}

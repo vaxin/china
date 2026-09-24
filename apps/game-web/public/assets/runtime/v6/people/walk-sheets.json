@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "productionMethod": "direction-anchor-i2v-cycle-extraction",
+  "rows": 4,
+  "columns": 8,
+  "cellWidth": 256,
+  "cellHeight": 256,
+  "directions": ["south-east", "south-west", "north-west", "north-east"],
+  "frames": [
+    "contact-a",
+    "down-a",
+    "passing-a",
+    "up-a",
+    "contact-b",
+    "down-b",
+    "passing-b",
+    "up-b"
+  ],
+  "frameDurationMs": 120,
+  "pivot": [0.5, 0.96875],
+  "mirroredRows": {
+    "south-west": "south-east",
+    "north-west": "north-east"
+  },
+  "roles": {
+    "farmer": "farmer-walk-4x8.png",
+    "artisan": "artisan-walk-4x8.png",
+    "merchant": "merchant-walk-4x8.png",
+    "official": "official-walk-4x8.png"
+  }
+}

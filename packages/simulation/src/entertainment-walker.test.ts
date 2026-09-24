@@ -60,7 +60,8 @@ function entertainmentCity(): WorldSnapshot {
 describe("音乐行者沿真实道路提供娱乐覆盖", () => {
   it("学校每次只派一名乐师去市场，只有实际经过的住宅获得覆盖", () => {
     const world = hydrateWorld(entertainmentCity());
-    applyCommand(world, { seq: 1, type: "advance-time", ticks: 4 });
+    applyCommand(world, { seq: 1, type: "advance-time", ticks: 1 });
+    applyCommand(world, { seq: 2, type: "advance-activity", pulses: 3 });
     const snapshot = snapshotWorld(world);
     expect(
       snapshot.households.find((household) => household.houseId === 3),
@@ -74,9 +75,11 @@ describe("音乐行者沿真实道路提供娱乐覆盖", () => {
 
   it("道路中断后乐师消失，既有娱乐覆盖按月自然过期", () => {
     const world = hydrateWorld(entertainmentCity());
-    applyCommand(world, { seq: 1, type: "advance-time", ticks: 4 });
-    applyCommand(world, { seq: 2, type: "demolish", x: 5, y: 15 });
-    applyCommand(world, { seq: 3, type: "advance-time", ticks: 3 });
+    applyCommand(world, { seq: 1, type: "advance-time", ticks: 1 });
+    applyCommand(world, { seq: 2, type: "advance-activity", pulses: 3 });
+    applyCommand(world, { seq: 3, type: "demolish", x: 5, y: 15 });
+    applyCommand(world, { seq: 4, type: "advance-activity", pulses: 1 });
+    applyCommand(world, { seq: 5, type: "advance-time", ticks: 3 });
     const snapshot = snapshotWorld(world);
     expect(snapshot.performers ?? []).toHaveLength(0);
     expect(

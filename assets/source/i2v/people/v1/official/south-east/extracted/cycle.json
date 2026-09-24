@@ -1,0 +1,88 @@
+{
+  "video": "assets/source/i2v/people/v1/official/south-east/raw.mp4",
+  "sourceFrameCount": 121,
+  "fps": 24.0,
+  "cycleStartFrame": 55,
+  "cyclePeriodFrames": 25,
+  "cycleDurationSeconds": 1.0416666666666667,
+  "selectedSourceFrames": [
+    55,
+    58,
+    61,
+    64,
+    67,
+    71,
+    74,
+    77
+  ],
+  "bestPeriodScore": 0.0010289158672094345,
+  "nextBestPeriod": {
+    "frames": 26,
+    "score": 0.0026084580458700657
+  },
+  "adjacentFrameDifferences": [
+    0.010776521638035774,
+    0.012796935625374317,
+    0.01355427410453558,
+    0.009357568807899952,
+    0.010320553556084633,
+    0.017237167805433273,
+    0.010751232504844666,
+    0.009456448256969452
+  ],
+  "foregroundBounds": [
+    [
+      79,
+      28,
+      177,
+      245
+    ],
+    [
+      82,
+      26,
+      173,
+      245
+    ],
+    [
+      88,
+      23,
+      169,
+      245
+    ],
+    [
+      82,
+      25,
+      170,
+      245
+    ],
+    [
+      79,
+      27,
+      184,
+      245
+    ],
+    [
+      82,
+      26,
+      169,
+      245
+    ],
+    [
+      89,
+      23,
+      171,
+      245
+    ],
+    [
+      83,
+      25,
+      175,
+      245
+    ]
+  ],
+  "outputs": {
+    "sheet": "assets/source/i2v/people/v1/official/south-east/extracted/cycle-1x8.png",
+    "contact": "assets/source/i2v/people/v1/official/south-east/extracted/contact.png",
+    "gif": "assets/source/i2v/people/v1/official/south-east/extracted/cycle.gif"
+  }
+}

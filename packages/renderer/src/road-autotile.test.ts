@@ -78,4 +78,20 @@ describe("道路四邻接自动拼接", () => {
     expect(masks.get(1 * 32 + 2)).toBe(ROAD_SOUTH);
     expect(masks.get(2 * 32 + 3)).toBe(ROAD_WEST);
   });
+
+  it("负坐标道路在扩展地形原点下仍生成唯一键和正确连接", () => {
+    const bounds = { originX: -32, originY: -32, width: 96, height: 96 };
+    const masks = roadConnectionMasks(
+      [
+        { x: -20, y: 15 },
+        { x: -19, y: 15 },
+      ],
+      bounds,
+    );
+    const key = (x: number, y: number) =>
+      (y - bounds.originY) * bounds.width + x - bounds.originX;
+
+    expect(masks.get(key(-20, 15))).toBe(ROAD_EAST);
+    expect(masks.get(key(-19, 15))).toBe(ROAD_WEST);
+  });
 });

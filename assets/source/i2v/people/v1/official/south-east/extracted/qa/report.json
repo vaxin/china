@@ -1,0 +1,202 @@
+{
+  "passed": true,
+  "sheet": "assets/source/i2v/people/v1/official/south-east/extracted/cycle-1x8-normalized.png",
+  "sheetSize": [
+    2048,
+    256
+  ],
+  "grid": {
+    "rows": 1,
+    "columns": 8
+  },
+  "cellSize": [
+    256,
+    256
+  ],
+  "medianBaseline": 248.0,
+  "maximumBaselineDeviation": 0.0,
+  "medianSpriteHeight": 220.0,
+  "maximumHeightDrift": 0.004545454545454545,
+  "medianBodyAxisX": 128.0,
+  "maximumBodyAxisDeviation": 0.5,
+  "frames": [
+    [
+      {
+        "direction": "south-east",
+        "frame": 0,
+        "file": "assets/source/i2v/people/v1/official/south-east/extracted/qa/frames/south-east-0.png",
+        "coverage": 0.2053,
+        "bbox": [
+          80,
+          28,
+          178,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 1,
+        "file": "assets/source/i2v/people/v1/official/south-east/extracted/qa/frames/south-east-1.png",
+        "coverage": 0.1969,
+        "bbox": [
+          83,
+          29,
+          175,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 2,
+        "file": "assets/source/i2v/people/v1/official/south-east/extracted/qa/frames/south-east-2.png",
+        "coverage": 0.1905,
+        "bbox": [
+          89,
+          29,
+          169,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 3,
+        "file": "assets/source/i2v/people/v1/official/south-east/extracted/qa/frames/south-east-3.png",
+        "coverage": 0.1991,
+        "bbox": [
+          83,
+          29,
+          171,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 4,
+        "file": "assets/source/i2v/people/v1/official/south-east/extracted/qa/frames/south-east-4.png",
+        "coverage": 0.2047,
+        "bbox": [
+          78,
+          30,
+          185,
+          249
+        ],
+        "baseline": 248,
+        "height": 219,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 5,
+        "file": "assets/source/i2v/people/v1/official/south-east/extracted/qa/frames/south-east-5.png",
+        "coverage": 0.1969,
+        "bbox": [
+          81,
+          29,
+          169,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 6,
+        "file": "assets/source/i2v/people/v1/official/south-east/extracted/qa/frames/south-east-6.png",
+        "coverage": 0.1867,
+        "bbox": [
+          90,
+          29,
+          170,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 7,
+        "file": "assets/source/i2v/people/v1/official/south-east/extracted/qa/frames/south-east-7.png",
+        "coverage": 0.1911,
+        "bbox": [
+          83,
+          29,
+          175,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      }
+    ]
+  ],
+  "motion": [
+    {
+      "direction": "south-east",
+      "adjacentMaskIoU": [
+        0.8844,
+        0.8713,
+        0.8549,
+        0.9009,
+        0.8843,
+        0.8184,
+        0.8817,
+        0.8969
+      ],
+      "adjacentLowerBodyIoU": [
+        0.8314,
+        0.8305,
+        0.7967,
+        0.8626,
+        0.8507,
+        0.7375,
+        0.8343,
+        0.8418
+      ],
+      "adjacentRgbDifference": [
+        0.1212,
+        0.1492,
+        0.135,
+        0.1174,
+        0.1318,
+        0.1524,
+        0.1236,
+        0.1004
+      ],
+      "adjacentLowerBodyRgbDifference": [
+        0.161,
+        0.191,
+        0.1767,
+        0.1429,
+        0.1572,
+        0.2028,
+        0.1715,
+        0.1336
+      ],
+      "meanMaskIoU": 0.8741,
+      "meanRgbDifference": 0.1289
+    }
+  ],
+  "directionSimilarity": [],
+  "previews": {
+    "contactSheet": "assets/source/i2v/people/v1/official/south-east/extracted/qa/contact-sheet.png",
+    "gifs": [
+      "assets/source/i2v/people/v1/official/south-east/extracted/qa/south-east.gif"
+    ]
+  },
+  "errors": [],
+  "warnings": []
+}

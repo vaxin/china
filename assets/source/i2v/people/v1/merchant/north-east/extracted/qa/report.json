@@ -1,0 +1,202 @@
+{
+  "passed": true,
+  "sheet": "assets/source/i2v/people/v1/merchant/north-east/extracted/cycle-1x8-normalized.png",
+  "sheetSize": [
+    2048,
+    256
+  ],
+  "grid": {
+    "rows": 1,
+    "columns": 8
+  },
+  "cellSize": [
+    256,
+    256
+  ],
+  "medianBaseline": 248.0,
+  "maximumBaselineDeviation": 0.0,
+  "medianSpriteHeight": 221.0,
+  "maximumHeightDrift": 0.004524886877828055,
+  "medianBodyAxisX": 127.75,
+  "maximumBodyAxisDeviation": 0.75,
+  "frames": [
+    [
+      {
+        "direction": "south-east",
+        "frame": 0,
+        "file": "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/frames/south-east-0.png",
+        "coverage": 0.183,
+        "bbox": [
+          73,
+          28,
+          174,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 1,
+        "file": "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/frames/south-east-1.png",
+        "coverage": 0.1975,
+        "bbox": [
+          79,
+          29,
+          174,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 2,
+        "file": "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/frames/south-east-2.png",
+        "coverage": 0.1987,
+        "bbox": [
+          69,
+          29,
+          173,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 3,
+        "file": "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/frames/south-east-3.png",
+        "coverage": 0.1988,
+        "bbox": [
+          70,
+          29,
+          173,
+          249
+        ],
+        "baseline": 248,
+        "height": 220,
+        "bodyAxisX": 128.0
+      },
+      {
+        "direction": "south-east",
+        "frame": 4,
+        "file": "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/frames/south-east-4.png",
+        "coverage": 0.1983,
+        "bbox": [
+          80,
+          28,
+          173,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 5,
+        "file": "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/frames/south-east-5.png",
+        "coverage": 0.1845,
+        "bbox": [
+          75,
+          28,
+          175,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 128.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 6,
+        "file": "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/frames/south-east-6.png",
+        "coverage": 0.1827,
+        "bbox": [
+          70,
+          28,
+          175,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 127.5
+      },
+      {
+        "direction": "south-east",
+        "frame": 7,
+        "file": "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/frames/south-east-7.png",
+        "coverage": 0.1832,
+        "bbox": [
+          71,
+          28,
+          175,
+          249
+        ],
+        "baseline": 248,
+        "height": 221,
+        "bodyAxisX": 128.0
+      }
+    ]
+  ],
+  "motion": [
+    {
+      "direction": "south-east",
+      "adjacentMaskIoU": [
+        0.8283,
+        0.7979,
+        0.9367,
+        0.871,
+        0.7292,
+        0.881,
+        0.9268,
+        0.915
+      ],
+      "adjacentLowerBodyIoU": [
+        0.6852,
+        0.6642,
+        0.8835,
+        0.769,
+        0.5521,
+        0.7698,
+        0.863,
+        0.8542
+      ],
+      "adjacentRgbDifference": [
+        0.1456,
+        0.134,
+        0.0708,
+        0.1288,
+        0.1581,
+        0.0881,
+        0.0864,
+        0.0988
+      ],
+      "adjacentLowerBodyRgbDifference": [
+        0.1832,
+        0.168,
+        0.0953,
+        0.1532,
+        0.1979,
+        0.1437,
+        0.1154,
+        0.1225
+      ],
+      "meanMaskIoU": 0.8608,
+      "meanRgbDifference": 0.1138
+    }
+  ],
+  "directionSimilarity": [],
+  "previews": {
+    "contactSheet": "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/contact-sheet.png",
+    "gifs": [
+      "assets/source/i2v/people/v1/merchant/north-east/extracted/qa/south-east.gif"
+    ]
+  },
+  "errors": [],
+  "warnings": []
+}

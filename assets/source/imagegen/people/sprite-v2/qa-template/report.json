@@ -1,0 +1,706 @@
+{
+  "passed": false,
+  "sheet": "assets/source/imagegen/people/sprite-v2/farmer-walk-4x8-template.png",
+  "sheetSize": [
+    2048,
+    1024
+  ],
+  "grid": {
+    "rows": 4,
+    "columns": 8
+  },
+  "cellSize": [
+    256,
+    256
+  ],
+  "medianBaseline": 255.0,
+  "maximumBaselineDeviation": 0.0,
+  "medianSpriteHeight": 220.0,
+  "maximumHeightDrift": 0.0,
+  "frames": [
+    [
+      {
+        "direction": "south-east",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-east-0.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-east",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-east-1.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-east",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-east-2.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-east",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-east-3.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-east",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-east-4.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-east",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-east-5.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-east",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-east-6.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-east",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-east-7.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      }
+    ],
+    [
+      {
+        "direction": "south-west",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-west-0.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-west",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-west-1.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-west",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-west-2.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-west",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-west-3.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-west",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-west-4.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-west",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-west-5.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-west",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-west-6.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "south-west",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/south-west-7.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      }
+    ],
+    [
+      {
+        "direction": "north-west",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-west-0.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-west",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-west-1.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-west",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-west-2.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-west",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-west-3.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-west",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-west-4.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-west",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-west-5.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-west",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-west-6.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-west",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-west-7.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      }
+    ],
+    [
+      {
+        "direction": "north-east",
+        "frame": 0,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-east-0.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-east",
+        "frame": 1,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-east-1.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-east",
+        "frame": 2,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-east-2.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-east",
+        "frame": 3,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-east-3.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-east",
+        "frame": 4,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-east-4.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-east",
+        "frame": 5,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-east-5.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-east",
+        "frame": 6,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-east-6.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      },
+      {
+        "direction": "north-east",
+        "frame": 7,
+        "file": "assets/source/imagegen/people/sprite-v2/qa-template/frames/north-east-7.png",
+        "coverage": 0.1554,
+        "bbox": [
+          78,
+          36,
+          177,
+          256
+        ],
+        "baseline": 255,
+        "height": 220
+      }
+    ]
+  ],
+  "motion": [
+    {
+      "direction": "south-east",
+      "adjacentMaskIoU": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "adjacentRgbDifference": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "meanMaskIoU": 1.0,
+      "meanRgbDifference": 0.0
+    },
+    {
+      "direction": "south-west",
+      "adjacentMaskIoU": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "adjacentRgbDifference": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "meanMaskIoU": 1.0,
+      "meanRgbDifference": 0.0
+    },
+    {
+      "direction": "north-west",
+      "adjacentMaskIoU": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "adjacentRgbDifference": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "meanMaskIoU": 1.0,
+      "meanRgbDifference": 0.0
+    },
+    {
+      "direction": "north-east",
+      "adjacentMaskIoU": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "adjacentRgbDifference": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "meanMaskIoU": 1.0,
+      "meanRgbDifference": 0.0
+    }
+  ],
+  "directionSimilarity": [
+    {
+      "rows": [
+        "south-east",
+        "south-west"
+      ],
+      "meanMaskIoU": 1.0
+    },
+    {
+      "rows": [
+        "south-east",
+        "north-west"
+      ],
+      "meanMaskIoU": 1.0
+    },
+    {
+      "rows": [
+        "south-east",
+        "north-east"
+      ],
+      "meanMaskIoU": 1.0
+    },
+    {
+      "rows": [
+        "south-west",
+        "north-west"
+      ],
+      "meanMaskIoU": 1.0
+    },
+    {
+      "rows": [
+        "south-west",
+        "north-east"
+      ],
+      "meanMaskIoU": 1.0
+    },
+    {
+      "rows": [
+        "north-west",
+        "north-east"
+      ],
+      "meanMaskIoU": 1.0
+    }
+  ],
+  "previews": {
+    "contactSheet": "assets/source/imagegen/people/sprite-v2/qa-template/contact-sheet.png",
+    "gifs": [
+      "assets/source/imagegen/people/sprite-v2/qa-template/south-east.gif",
+      "assets/source/imagegen/people/sprite-v2/qa-template/south-west.gif",
+      "assets/source/imagegen/people/sprite-v2/qa-template/north-west.gif",
+      "assets/source/imagegen/people/sprite-v2/qa-template/north-east.gif"
+    ]
+  },
+  "errors": [
+    "south-east frame 0: sprite touches cell safety edge",
+    "south-east frame 1: sprite touches cell safety edge",
+    "south-east frame 2: sprite touches cell safety edge",
+    "south-east frame 3: sprite touches cell safety edge",
+    "south-east frame 4: sprite touches cell safety edge",
+    "south-east frame 5: sprite touches cell safety edge",
+    "south-east frame 6: sprite touches cell safety edge",
+    "south-east frame 7: sprite touches cell safety edge",
+    "south-west frame 0: sprite touches cell safety edge",
+    "south-west frame 1: sprite touches cell safety edge",
+    "south-west frame 2: sprite touches cell safety edge",
+    "south-west frame 3: sprite touches cell safety edge",
+    "south-west frame 4: sprite touches cell safety edge",
+    "south-west frame 5: sprite touches cell safety edge",
+    "south-west frame 6: sprite touches cell safety edge",
+    "south-west frame 7: sprite touches cell safety edge",
+    "north-west frame 0: sprite touches cell safety edge",
+    "north-west frame 1: sprite touches cell safety edge",
+    "north-west frame 2: sprite touches cell safety edge",
+    "north-west frame 3: sprite touches cell safety edge",
+    "north-west frame 4: sprite touches cell safety edge",
+    "north-west frame 5: sprite touches cell safety edge",
+    "north-west frame 6: sprite touches cell safety edge",
+    "north-west frame 7: sprite touches cell safety edge",
+    "north-east frame 0: sprite touches cell safety edge",
+    "north-east frame 1: sprite touches cell safety edge",
+    "north-east frame 2: sprite touches cell safety edge",
+    "north-east frame 3: sprite touches cell safety edge",
+    "north-east frame 4: sprite touches cell safety edge",
+    "north-east frame 5: sprite touches cell safety edge",
+    "north-east frame 6: sprite touches cell safety edge",
+    "north-east frame 7: sprite touches cell safety edge",
+    "south-east frames 0->1: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-east frames 1->2: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-east frames 2->3: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-east frames 3->4: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-east frames 4->5: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-east frames 5->6: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-east frames 6->7: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-east frames 7->0: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-west frames 0->1: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-west frames 1->2: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-west frames 2->3: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-west frames 3->4: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-west frames 4->5: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-west frames 5->6: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-west frames 6->7: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "south-west frames 7->0: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-west frames 0->1: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-west frames 1->2: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-west frames 2->3: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-west frames 3->4: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-west frames 4->5: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-west frames 5->6: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-west frames 6->7: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-west frames 7->0: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-east frames 0->1: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-east frames 1->2: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-east frames 2->3: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-east frames 3->4: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-east frames 4->5: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-east frames 5->6: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-east frames 6->7: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "north-east frames 7->0: near-duplicate pose (IoU 1.000, RGB diff 0.000)",
+    "direction rows south-east and south-west are too similar (mean IoU 1.000)",
+    "direction rows south-east and north-west are too similar (mean IoU 1.000)",
+    "direction rows south-east and north-east are too similar (mean IoU 1.000)",
+    "direction rows south-west and north-west are too similar (mean IoU 1.000)",
+    "direction rows south-west and north-east are too similar (mean IoU 1.000)",
+    "direction rows north-west and north-east are too similar (mean IoU 1.000)"
+  ],
+  "warnings": []
+}

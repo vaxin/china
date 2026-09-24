@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_TERRAIN_CONTRACT } from "@empire/protocol";
 
 import { createSimulationRuntime } from "./index";
 
@@ -10,10 +11,12 @@ describe("Worker 模拟运行时", () => {
       type: "ready",
       snapshot: {
         map: { width: 32, height: 32 },
+        terrain: { ...DEFAULT_TERRAIN_CONTRACT },
         tick: 0,
         revision: 0,
         buildings: [],
         roads: [],
+        walls: [],
         households: [],
         migrants: [],
       },
@@ -93,15 +96,23 @@ describe("Worker 模拟运行时", () => {
       }),
     ).toMatchObject({ result: { accepted: true, revision: 2 } });
 
+    runtime.handle({
+      type: "command",
+      command: { seq: 3, type: "advance-time", ticks: 1 },
+    });
+    runtime.handle({
+      type: "command",
+      command: { seq: 4, type: "advance-activity", pulses: 1 },
+    });
     expect(
       runtime.handle({
         type: "command",
-        command: { seq: 3, type: "advance-time", ticks: 5 },
+        command: { seq: 5, type: "advance-time", ticks: 3 },
       }),
     ).toMatchObject({
       result: { accepted: true, revision: 7 },
       snapshot: {
-        tick: 5,
+        tick: 4,
         roads: [{ x: 0, y: 15 }],
         households: [{ houseId: 1, residents: 5 }],
       },
@@ -132,13 +143,21 @@ describe("Worker 模拟运行时", () => {
     });
     runtime.handle({
       type: "command",
-      command: { seq: 3, type: "advance-time", ticks: 5 },
+      command: { seq: 3, type: "advance-time", ticks: 1 },
+    });
+    runtime.handle({
+      type: "command",
+      command: { seq: 4, type: "advance-activity", pulses: 1 },
+    });
+    runtime.handle({
+      type: "command",
+      command: { seq: 5, type: "advance-time", ticks: 3 },
     });
 
     expect(
       runtime.handle({
         type: "command",
-        command: { seq: 4, type: "demolish", x: 0, y: 15 },
+        command: { seq: 6, type: "demolish", x: 0, y: 15 },
       }),
     ).toMatchObject({
       result: { accepted: true, revision: 8 },
@@ -180,15 +199,23 @@ describe("Worker 模拟运行时", () => {
       },
     });
 
+    runtime.handle({
+      type: "command",
+      command: { seq: 4, type: "advance-time", ticks: 1 },
+    });
+    runtime.handle({
+      type: "command",
+      command: { seq: 5, type: "advance-activity", pulses: 1 },
+    });
     expect(
       runtime.handle({
         type: "command",
-        command: { seq: 4, type: "advance-time", ticks: 6 },
+        command: { seq: 6, type: "advance-time", ticks: 4 },
       }),
     ).toMatchObject({
       result: { accepted: true },
       snapshot: {
-        tick: 6,
+        tick: 5,
         buildings: [{ typeId: "house", level: 2 }, { typeId: "well" }],
         households: [{ houseId: 1, residents: 10 }],
       },
@@ -197,7 +224,7 @@ describe("Worker 模拟运行时", () => {
     expect(
       runtime.handle({
         type: "command",
-        command: { seq: 5, type: "demolish", x: 0, y: 14 },
+        command: { seq: 7, type: "demolish", x: 0, y: 14 },
       }),
     ).toMatchObject({
       result: { accepted: true },
@@ -307,10 +334,18 @@ describe("Worker 模拟运行时", () => {
       },
     });
 
+    runtime.handle({
+      type: "command",
+      command: { seq: 7, type: "advance-time", ticks: 2 },
+    });
+    runtime.handle({
+      type: "command",
+      command: { seq: 8, type: "advance-activity", pulses: 1 },
+    });
     expect(
       runtime.handle({
         type: "command",
-        command: { seq: 7, type: "advance-time", ticks: 8 },
+        command: { seq: 9, type: "advance-time", ticks: 6 },
       }),
     ).toMatchObject({
       result: { accepted: true },

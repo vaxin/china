@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>河洛原 · 家庭生计布局预览</title>
+    <style>
+      :root {
+        --ink: #071314;
+        --ink-2: #0d2021;
+        --ink-3: #132d2d;
+        --paper: #eee4c9;
+        --muted: #9ca89f;
+        --line: rgba(205, 178, 108, 0.2);
+        --line-strong: rgba(205, 178, 108, 0.45);
+        --brass: #d2af63;
+        --celadon: #83c1bd;
+        --vermillion: #cc7868;
+        --sage: #b5cc9d;
+        --serif: "Songti SC", "Noto Serif SC", STSong, serif;
+        --utility:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        --shadow: 0 20px 64px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+        color: var(--paper);
+        background:
+          radial-gradient(
+            circle at 16% 0%,
+            rgba(82, 126, 118, 0.18),
+            transparent 29rem
+          ),
+          linear-gradient(140deg, #081617 0%, #0b1a1b 44%, #101f1e 100%);
+        font-family: var(--serif);
+      }
+
+      button {
+        color: inherit;
+        font: inherit;
+      }
+
+      button:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 2px solid var(--celadon);
+        outline-offset: 4px;
+      }
+
+      .page {
+        width: min(1220px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 44px 0 70px;
+      }
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 16px;
+        color: var(--brass);
+        font-family: var(--utility);
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        width: 38px;
+        height: 1px;
+        content: "";
+        background: var(--brass);
+        opacity: 0.7;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 34px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 620px;
+        margin-bottom: 12px;
+        color: #f4ead1;
+        font-size: clamp(36px, 5vw, 66px);
+        font-weight: 500;
+        letter-spacing: 0.11em;
+        line-height: 0.98;
+      }
+
+      .intro {
+        max-width: 530px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.9;
+      }
+
+      .state-switcher {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 7px;
+        max-width: 300px;
+      }
+
+      .state-switcher button {
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        background: rgba(6, 19, 20, 0.45);
+        cursor: pointer;
+        font-family: var(--utility);
+        font-size: 10px;
+        transition: 160ms ease;
+      }
+
+      .state-switcher button:hover,
+      .state-switcher button[aria-pressed="true"] {
+        border-color: var(--brass);
+        color: var(--paper);
+        background: rgba(210, 175, 99, 0.12);
+      }
+
+      .livelihood-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--line-strong);
+        background: linear-gradient(
+          145deg,
+          rgba(18, 45, 45, 0.92),
+          rgba(8, 22, 23, 0.96)
+        );
+        box-shadow: var(--shadow);
+      }
+
+      .livelihood-card::after {
+        position: absolute;
+        right: -82px;
+        bottom: -88px;
+        width: 220px;
+        height: 220px;
+        border: 1px solid rgba(210, 175, 99, 0.13);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 18px rgba(210, 175, 99, 0.03),
+          0 0 0 36px rgba(210, 175, 99, 0.02);
+        content: "";
+        pointer-events: none;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .household-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .seal {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--brass);
+        color: var(--brass);
+        background: rgba(210, 175, 99, 0.08);
+        clip-path: polygon(50% 0, 94% 23%, 94% 77%, 50% 100%, 6% 77%, 6% 23%);
+        font-size: 15px;
+        place-items: center;
+      }
+
+      .household-title h2 {
+        margin-bottom: 4px;
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+      }
+
+      .household-title p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-family: var(--utility);
+        font-size: 10px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+        border: 1px solid rgba(131, 193, 189, 0.35);
+        color: var(--celadon);
+        background: rgba(131, 193, 189, 0.09);
+        font-family: var(--utility);
+        font-size: 10px;
+      }
+
+      .status::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 9px currentColor;
+        content: "";
+      }
+
+      .status.blocked {
+        border-color: rgba(204, 120, 104, 0.42);
+        color: var(--vermillion);
+        background: rgba(204, 120, 104, 0.09);
+      }
+
+      .card-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 260px;
+        gap: 0;
+      }
+
+      .flow-panel {
+        min-width: 0;
+        padding: 28px 26px 30px;
+      }
+
+      .flow-caption {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+
+      .flow-caption h3 {
+        margin-bottom: 0;
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.11em;
+      }
+
+      .flow-caption span {
+        color: var(--muted);
+        font-family: var(--utility);
+        font-size: 10px;
+      }
+
+      .flow {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .flow::before {
+        position: absolute;
+        top: 28px;
+        right: 8%;
+        left: 8%;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          var(--brass),
+          var(--celadon),
+          var(--brass)
+        );
+        content: "";
+        opacity: 0.52;
+      }
+
+      .flow::after {
+        position: absolute;
+        top: 25px;
+        left: 8%;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--celadon);
+        box-shadow: 0 0 12px var(--celadon);
+        content: "";
+        animation: current-flow 3.1s linear infinite;
+      }
+
+      .flow-stage {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        justify-items: center;
+        gap: 12px;
+        min-width: 0;
+        text-align: center;
+      }
+
+      .stage-mark {
+        display: grid;
+        width: 58px;
+        height: 58px;
+        border: 1px solid rgba(238, 228, 201, 0.28);
+        color: var(--muted);
+        background: var(--ink-3);
+        clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+        font-size: 20px;
+        place-items: center;
+      }
+
+      .flow-stage.active .stage-mark {
+        border-color: var(--celadon);
+        color: var(--paper);
+        background: rgba(131, 193, 189, 0.18);
+        filter: drop-shadow(0 0 8px rgba(131, 193, 189, 0.22));
+      }
+
+      .stage-name {
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-family: var(--utility);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+      }
+
+      .stage-value {
+        color: var(--paper);
+        font-size: 14px;
+      }
+
+      .stage-note {
+        margin-top: 5px;
+        color: var(--muted);
+        font-family: var(--utility);
+        font-size: 9px;
+        line-height: 1.5;
+      }
+
+      .stage-active-label {
+        display: inline-block;
+        margin-top: 6px;
+        padding: 3px 6px;
+        border: 1px solid rgba(131, 193, 189, 0.32);
+        color: var(--celadon);
+        font-family: var(--utility);
+        font-size: 8px;
+        letter-spacing: 0.1em;
+      }
+
+      .flow-foot {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 30px;
+        padding-top: 17px;
+        border-top: 1px solid var(--line);
+      }
+
+      .micro-stat {
+        padding: 9px 10px;
+        border-left: 1px solid var(--line-strong);
+      }
+
+      .micro-stat span {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .micro-stat strong {
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .ledger-panel {
+        padding: 26px 20px;
+        border-left: 1px solid var(--line);
+        background: rgba(4, 16, 17, 0.38);
+      }
+
+      .ledger-panel h3 {
+        margin-bottom: 4px;
+        color: var(--brass);
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.13em;
+      }
+
+      .ledger-subtitle {
+        margin-bottom: 20px;
+        color: var(--muted);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .ledger-list {
+        display: grid;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .ledger-row {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        align-items: baseline;
+        gap: 7px;
+        padding: 10px 0;
+        border-bottom: 1px dotted rgba(205, 178, 108, 0.2);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .ledger-row time,
+      .ledger-row small {
+        color: var(--muted);
+      }
+
+      .ledger-row strong {
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .income {
+        color: var(--sage);
+      }
+
+      .expense {
+        color: #e7a491;
+      }
+
+      .aside-note {
+        margin: 22px 0 0;
+        padding: 11px 12px;
+        border: 1px solid rgba(210, 175, 99, 0.19);
+        color: var(--muted);
+        background: rgba(210, 175, 99, 0.06);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .summary-strip {
+        display: grid;
+        grid-template-columns: 1.1fr repeat(3, 1fr);
+        gap: 1px;
+        margin-top: 18px;
+        border: 1px solid var(--line);
+        background: var(--line);
+      }
+
+      .summary-cell {
+        min-height: 92px;
+        padding: 16px 18px;
+        background: rgba(9, 27, 28, 0.88);
+      }
+
+      .summary-cell:first-child {
+        background: linear-gradient(
+          130deg,
+          rgba(210, 175, 99, 0.12),
+          rgba(9, 27, 28, 0.88)
+        );
+      }
+
+      .summary-cell span {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .summary-cell strong {
+        font-size: 21px;
+        font-weight: 500;
+      }
+
+      .summary-cell small {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .footnote {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        margin-top: 18px;
+        color: var(--muted);
+        font-family: var(--utility);
+        font-size: 9px;
+      }
+
+      .footnote span:last-child {
+        color: var(--brass);
+      }
+
+      @keyframes current-flow {
+        from {
+          left: 8%;
+        }
+        to {
+          left: 89%;
+        }
+      }
+
+      @media (max-width: 860px) {
+        .page {
+          width: min(100% - 24px, 620px);
+          padding-top: 28px;
+        }
+
+        .topbar {
+          display: block;
+          margin-bottom: 24px;
+        }
+
+        .state-switcher {
+          justify-content: flex-start;
+          margin-top: 22px;
+        }
+
+        .card-body {
+          grid-template-columns: 1fr;
+        }
+
+        .ledger-panel {
+          border-top: 1px solid var(--line);
+          border-left: 0;
+        }
+
+        .summary-strip {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .summary-cell:first-child {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 560px) {
+        h1 {
+          font-size: 40px;
+        }
+
+        .card-header {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 16px;
+        }
+
+        .flow-panel {
+          padding: 22px 16px;
+        }
+
+        .flow {
+          grid-template-columns: 1fr;
+          gap: 8px;
+          padding-left: 4px;
+        }
+
+        .flow::before {
+          top: 20px;
+          bottom: 20px;
+          left: 24px;
+          width: 1px;
+          height: auto;
+          background: linear-gradient(
+            180deg,
+            var(--brass),
+            var(--celadon),
+            var(--brass)
+          );
+        }
+
+        .flow::after {
+          display: none;
+        }
+
+        .flow-stage {
+          grid-template-columns: 48px 1fr;
+          align-items: center;
+          justify-items: start;
+          gap: 12px;
+          text-align: left;
+        }
+
+        .stage-mark {
+          width: 48px;
+          height: 48px;
+          font-size: 17px;
+        }
+
+        .flow-foot {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+
+        .micro-stat {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          padding: 8px 0;
+        }
+
+        .micro-stat span {
+          margin-bottom: 0;
+        }
+
+        .footnote {
+          display: block;
+          line-height: 1.8;
+        }
+
+        .footnote span {
+          display: block;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+
+        .flow::after {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">LIVELIHOOD / HOUSEHOLD 01</p>
+          <h1>一户人家，<br />如何过完这个月？</h1>
+          <p class="intro">
+            这是新的家庭生计详情布局预览。首屏只回答一个问题：这户人现在靠什么生活，钱和粮卡在了哪一站？
+          </p>
+        </div>
+        <div class="state-switcher" aria-label="切换预览状态">
+          <button type="button" data-state="stable" aria-pressed="false">
+            尚可度日
+          </button>
+          <button type="button" data-state="transit" aria-pressed="true">
+            运粮中
+          </button>
+          <button type="button" data-state="blocked" aria-pressed="false">
+            运路不通
+          </button>
+        </div>
+      </header>
+
+      <section class="livelihood-card" data-layout-card>
+        <header class="card-header">
+          <div class="household-title">
+            <span class="seal" aria-hidden="true">家</span>
+            <div>
+              <h2>住户 #01 · 河岸东宅</h2>
+              <p>5 人 · 二级住宅 · 今年八月</p>
+            </div>
+          </div>
+          <span class="status" data-status>运粮中 · 预计下月抵达</span>
+        </header>
+
+        <div class="card-body">
+          <section class="flow-panel" aria-labelledby="flow-title">
+            <div class="flow-caption">
+              <h3 id="flow-title">本月生计水道</h3>
+              <span>每月结算一次 · 余额不可透支</span>
+            </div>
+
+            <ol class="flow" data-flow>
+              <li class="flow-stage">
+                <span class="stage-mark" aria-hidden="true">作</span>
+                <div>
+                  <div class="stage-name">劳作</div>
+                  <div class="stage-value">2 人 · +4 钱</div>
+                  <div class="stage-note">公共工役 / 本月已结</div>
+                </div>
+              </li>
+              <li class="flow-stage">
+                <span class="stage-mark" aria-hidden="true">钱</span>
+                <div>
+                  <div class="stage-name">钱袋</div>
+                  <div class="stage-value">余 17 钱</div>
+                  <div class="stage-note">税欠 0 · 欠薪 0</div>
+                </div>
+              </li>
+              <li class="flow-stage active" data-stage="provision">
+                <span class="stage-mark" aria-hidden="true">运</span>
+                <div>
+                  <div class="stage-name">采办</div>
+                  <div class="stage-value" data-provision-value>五月到达</div>
+                  <div class="stage-note" data-provision-note>
+                    市集 #02 · 小麦一份
+                  </div>
+                  <span class="stage-active-label" data-active-label
+                    >当前环节</span
+                  >
+                </div>
+              </li>
+              <li class="flow-stage">
+                <span class="stage-mark" aria-hidden="true">粮</span>
+                <div>
+                  <div class="stage-name">粮瓮</div>
+                  <div class="stage-value" data-pantry-value>余 1 月</div>
+                  <div class="stage-note">到货后补至 3 月</div>
+                </div>
+              </li>
+            </ol>
+
+            <div class="flow-foot">
+              <div class="micro-stat">
+                <span>本月入账</span>
+                <strong class="income">+4 钱</strong>
+              </div>
+              <div class="micro-stat">
+                <span>本月粮费</span>
+                <strong class="expense">−1 钱</strong>
+              </div>
+              <div class="micro-stat">
+                <span>家庭现金</span>
+                <strong>17 钱</strong>
+              </div>
+            </div>
+          </section>
+
+          <aside class="ledger-panel" aria-labelledby="ledger-title">
+            <h3 id="ledger-title">近 12 笔流水</h3>
+            <p class="ledger-subtitle">金额 · 交易后余额</p>
+            <ol class="ledger-list">
+              <li class="ledger-row">
+                <time>八月</time>
+                <span>买粮 · 订单预扣</span>
+                <strong class="expense">−1</strong>
+              </li>
+              <li class="ledger-row">
+                <time>八月</time>
+                <span>公共工役 · 工钱</span>
+                <strong class="income">+4</strong>
+              </li>
+              <li class="ledger-row">
+                <time>七月</time>
+                <span>城外迁入 · 安家本钱</span>
+                <strong class="income">+12</strong>
+              </li>
+            </ol>
+            <p class="aside-note" data-aside-note>
+              钱已经付出，粮还在路上。此时显示“运粮中”，不把暂时断粮误判为贫困。
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="summary-strip" aria-label="城市家计摘要">
+        <div class="summary-cell">
+          <span>全城家计</span>
+          <strong>钱 137 · 工 8 户</strong>
+          <small>当前 12 户住户中，8 户有稳定收入</small>
+        </div>
+        <div class="summary-cell">
+          <span>断粮户</span>
+          <strong>1</strong>
+          <small>不含配送中的住户</small>
+        </div>
+        <div class="summary-cell">
+          <span>主阻塞</span>
+          <strong>运路不通</strong>
+          <small>1 户等待修路</small>
+        </div>
+        <div class="summary-cell">
+          <span>在途订单</span>
+          <strong>2</strong>
+          <small>均已预扣、库存已预留</small>
+        </div>
+      </section>
+
+      <footer class="footnote">
+        <span
+          >布局意图：详情先讲因果链，账本再给证据，城市摘要最后给管理视角。</span
+        >
+        <span>预览状态：可交互 · 响应式 · 支持减少动效</span>
+      </footer>
+    </main>
+
+    <script>
+      const buttons = [...document.querySelectorAll("[data-state]")];
+      const card = document.querySelector("[data-layout-card]");
+      const status = document.querySelector("[data-status]");
+      const activeLabel = document.querySelector("[data-active-label]");
+      const provisionValue = document.querySelector("[data-provision-value]");
+      const provisionNote = document.querySelector("[data-provision-note]");
+      const pantryValue = document.querySelector("[data-pantry-value]");
+      const asideNote = document.querySelector("[data-aside-note]");
+
+      const states = {
+        stable: {
+          label: "尚可度日 · 本月循环稳定",
+          provision: "可继续采办",
+          note: "市集 #02 · 还有 3 份库存",
+          pantry: "余 2 月",
+          aside: "本月收入覆盖税款和粮费，下一月无需额外干预。",
+          blocked: false,
+        },
+        transit: {
+          label: "运粮中 · 预计下月抵达",
+          provision: "五月到达",
+          note: "市集 #02 · 小麦一份",
+          pantry: "余 1 月",
+          aside:
+            "钱已经付出，粮还在路上。此时显示“运粮中”，不把暂时断粮误判为贫困。",
+          blocked: false,
+        },
+        blocked: {
+          label: "运路不通 · 订单将退款",
+          provision: "配送受阻",
+          note: "城门东路断开 · 等待修路",
+          pantry: "已断粮",
+          aside:
+            "订单会在到达 tick 复验道路；失败后全额退款，市场库存同时释放。",
+          blocked: true,
+        },
+      };
+
+      function setState(name) {
+        const next = states[name];
+        buttons.forEach((button) => {
+          button.setAttribute(
+            "aria-pressed",
+            String(button.dataset.state === name),
+          );
+        });
+        status.textContent = next.label;
+        status.classList.toggle("blocked", next.blocked);
+        provisionValue.textContent = next.provision;
+        provisionNote.textContent = next.note;
+        pantryValue.textContent = next.pantry;
+        asideNote.textContent = next.aside;
+        activeLabel.textContent = next.blocked ? "当前阻塞" : "当前环节";
+        card.dataset.state = name;
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => setState(button.dataset.state));
+      });
+    </script>
+  </body>
+</html>

@@ -1,12 +1,24 @@
 import { IDBKeyRange, indexedDB } from "fake-indexeddb";
 import { describe, expect, it } from "vitest";
-import type { WorldSnapshot } from "@empire/protocol";
+import { DEFAULT_TERRAIN_CONTRACT, type WorldSnapshot } from "@empire/protocol";
 
 import { GameSaveStore } from "./index";
+
+const householdLivelihoodDefaults = {
+  cash: 12,
+  employedWorkers: 0,
+  lastIncome: 0,
+  lastFoodExpense: 0,
+  wageArrears: 0,
+  taxArrears: 0,
+  foodShortageReason: "none" as const,
+  livelihoodLedger: [],
+};
 
 function worldWithOneHouse(): WorldSnapshot {
   return {
     map: { width: 32, height: 32 },
+    terrain: { ...DEFAULT_TERRAIN_CONTRACT },
     tick: 0,
     revision: 1,
     buildings: [
@@ -22,6 +34,7 @@ function worldWithOneHouse(): WorldSnapshot {
       },
     ],
     roads: [],
+    walls: [],
     households: [],
     migrants: [],
   };
@@ -30,6 +43,7 @@ function worldWithOneHouse(): WorldSnapshot {
 function worldWithWateredUpgradedHouse(): WorldSnapshot {
   return {
     map: { width: 32, height: 32 },
+    terrain: { ...DEFAULT_TERRAIN_CONTRACT },
     tick: 2,
     revision: 5,
     buildings: [
@@ -53,12 +67,14 @@ function worldWithWateredUpgradedHouse(): WorldSnapshot {
       },
     ],
     roads: [{ x: 0, y: 15 }],
+    walls: [],
     households: [
       {
         houseId: 1,
         residents: 10,
         foodReserveTicks: 2,
         foodQuality: "bland",
+        ...householdLivelihoodDefaults,
       },
     ],
     migrants: [],
@@ -68,6 +84,7 @@ function worldWithWateredUpgradedHouse(): WorldSnapshot {
 function worldWithFoodBuildings(): WorldSnapshot {
   return {
     map: { width: 32, height: 32 },
+    terrain: { ...DEFAULT_TERRAIN_CONTRACT },
     tick: 6,
     revision: 9,
     buildings: [
@@ -103,8 +120,87 @@ function worldWithFoodBuildings(): WorldSnapshot {
       },
     ],
     roads: [],
+    walls: [],
     households: [],
     migrants: [],
+  };
+}
+
+function worldWithPendingLivelihoodOrder(): WorldSnapshot {
+  const world = worldWithWateredUpgradedHouse();
+  return {
+    ...world,
+    buildings: [
+      ...world.buildings,
+      {
+        id: 3,
+        typeId: "market",
+        x: 4,
+        y: 14,
+        rotation: 0,
+        footprint: { width: 2, height: 2 },
+        foodStock: 1,
+        foodStocks: {
+          wheat: 1,
+          soybean: 0,
+          rice: 0,
+          millet: 0,
+          cabbage: 0,
+        },
+        clothingStock: 0,
+      },
+    ],
+    roads: [
+      { x: 0, y: 15 },
+      ...Array.from({ length: 5 }, (_, x) => ({ x, y: 16 })),
+    ],
+    households: [
+      {
+        ...world.households[0]!,
+        cash: 17,
+        employedWorkers: 2,
+        lastIncome: 4,
+        lastFoodExpense: 1,
+        foodShortageReason: "delivery-pending",
+        livelihoodLedger: [
+          {
+            id: "2:wage:0",
+            tick: 2,
+            kind: "wage",
+            amount: 4,
+            balanceAfter: 18,
+          },
+          {
+            id: "2:food-order:0",
+            tick: 2,
+            kind: "food-order",
+            amount: -1,
+            balanceAfter: 17,
+          },
+        ],
+      },
+    ],
+    householdFoodOrders: [
+      {
+        houseId: 1,
+        marketId: 3,
+        cropType: "wheat",
+        foodQuality: "bland",
+        price: 1,
+        placedAtTick: 2,
+        arrivesAtTick: 3,
+      },
+    ],
+    economy: {
+      treasury: 499,
+      taxRate: "standard",
+      lastTaxRevenue: 0,
+      lastPayroll: 4,
+      taxableHouses: 0,
+      sentiment: 50,
+      lastTradeRevenue: 0,
+      foodOrderEscrow: 1,
+    },
   };
 }
 
@@ -194,14 +290,46 @@ describe("自动存档", () => {
     reopenedStore.close();
     const databaseState = await inspectDatabase(databaseName);
     expect(databaseState.active).toMatchObject({
-      envelope: { saveFormatVersion: 6 },
+      envelope: { saveFormatVersion: 8 },
     });
   });
 
-  it("v6 施工阶段与流民位置保存后可精确恢复", async () => {
-    const databaseName = `empire-v6-construction-${crypto.randomUUID()}`;
+  it("v7 城门两侧城墙保存后可精确恢复", async () => {
+    const databaseName = `empire-v7-walls-${crypto.randomUUID()}`;
+    const savedWorld: WorldSnapshot = {
+      ...worldWithOneHouse(),
+      revision: 2,
+      walls: [
+        { x: 0, y: 14 },
+        { x: 0, y: 16 },
+      ],
+    };
+    const store = new GameSaveStore({ databaseName, indexedDB, IDBKeyRange });
+
+    await store.save(savedWorld);
+    store.close();
+    const reopened = new GameSaveStore({
+      databaseName,
+      indexedDB,
+      IDBKeyRange,
+    });
+
+    await expect(reopened.load()).resolves.toEqual({
+      status: "loaded",
+      snapshot: savedWorld,
+    });
+    reopened.close();
+    const databaseState = await inspectDatabase(databaseName);
+    expect(databaseState.active).toMatchObject({
+      envelope: { saveFormatVersion: 8, world: { walls: savedWorld.walls } },
+    });
+  });
+
+  it("v7 施工阶段与流民位置保存后可精确恢复", async () => {
+    const databaseName = `empire-v7-construction-${crypto.randomUUID()}`;
     const savedWorld: WorldSnapshot = {
       map: { width: 32, height: 32 },
+      terrain: { ...DEFAULT_TERRAIN_CONTRACT },
       tick: 3,
       revision: 6,
       buildings: [
@@ -217,6 +345,7 @@ describe("自动存档", () => {
         },
       ],
       roads: [{ x: 0, y: 15 }],
+      walls: [],
       households: [],
       migrants: [{ houseId: 1, x: 0, y: 15, state: "building" }],
     };
@@ -237,8 +366,8 @@ describe("自动存档", () => {
     reopened.close();
   });
 
-  it("v6 水井、二级住宅和住户口粮保存后可完整恢复", async () => {
-    const databaseName = `empire-v6-upgraded-${crypto.randomUUID()}`;
+  it("v7 水井、二级住宅和住户口粮保存后可完整恢复", async () => {
+    const databaseName = `empire-v7-upgraded-${crypto.randomUUID()}`;
     const savedWorld = worldWithWateredUpgradedHouse();
     const firstStore = new GameSaveStore({
       databaseName,
@@ -262,15 +391,35 @@ describe("自动存档", () => {
     const databaseState = await inspectDatabase(databaseName);
     expect(databaseState.active).toMatchObject({
       envelope: {
-        saveFormatVersion: 6,
+        saveFormatVersion: 8,
         world: savedWorld,
       },
     });
     expect(databaseState.quarantined).toEqual([]);
   });
 
-  it("v6 农场、粮仓和市场各自库存保存后可完整恢复", async () => {
-    const databaseName = `empire-v6-food-stock-${crypto.randomUUID()}`;
+  it("v7 家庭钱袋、流水和在途口粮订单保存后可完整恢复", async () => {
+    const databaseName = `empire-v7-livelihood-${crypto.randomUUID()}`;
+    const savedWorld = worldWithPendingLivelihoodOrder();
+    const store = new GameSaveStore({ databaseName, indexedDB, IDBKeyRange });
+
+    await store.save(savedWorld);
+    store.close();
+    const reopened = new GameSaveStore({
+      databaseName,
+      indexedDB,
+      IDBKeyRange,
+    });
+
+    await expect(reopened.load()).resolves.toEqual({
+      status: "loaded",
+      snapshot: savedWorld,
+    });
+    reopened.close();
+  });
+
+  it("v7 农场、粮仓和市场各自库存保存后可完整恢复", async () => {
+    const databaseName = `empire-v7-food-stock-${crypto.randomUUID()}`;
     const savedWorld = worldWithFoodBuildings();
     const firstStore = new GameSaveStore({
       databaseName,
@@ -294,14 +443,14 @@ describe("自动存档", () => {
     const databaseState = await inspectDatabase(databaseName);
     expect(databaseState.active).toMatchObject({
       envelope: {
-        saveFormatVersion: 6,
+        saveFormatVersion: 8,
         world: savedWorld,
       },
     });
     expect(databaseState.quarantined).toEqual([]);
   });
 
-  it("合法 frozen v3 原位迁移为 v6 并为 10 人住户补口粮", async () => {
+  it("合法 frozen v3 原位迁移为 v7 并为 10 人住户补口粮", async () => {
     const databaseName = `empire-v3-to-v6-${crypto.randomUUID()}`;
     const initialStore = new GameSaveStore({
       databaseName,
@@ -338,6 +487,7 @@ describe("自动存档", () => {
       households: currentWorld.households.map((household) => ({
         ...household,
         foodReserveTicks: 3 as const,
+        ...householdLivelihoodDefaults,
       })),
     };
     await writeRawAutosave(databaseName, {
@@ -360,13 +510,13 @@ describe("自动存档", () => {
     expect(databaseState.quarantined).toEqual([]);
     expect(databaseState.active).toMatchObject({
       envelope: {
-        saveFormatVersion: 6,
+        saveFormatVersion: 8,
         world: expectedMigratedWorld,
       },
     });
   });
 
-  it("合法 frozen v4 首次载入时补口粮并原位回写为 v6", async () => {
+  it("合法 frozen v4 首次载入时补口粮并原位回写为 v7", async () => {
     const databaseName = `empire-v4-to-v6-${crypto.randomUUID()}`;
     const initialStore = new GameSaveStore({
       databaseName,
@@ -403,6 +553,7 @@ describe("自动存档", () => {
       households: currentWorld.households.map((household) => ({
         ...household,
         foodReserveTicks: 3 as const,
+        ...householdLivelihoodDefaults,
       })),
     };
     await writeRawAutosave(databaseName, {
@@ -424,7 +575,7 @@ describe("自动存档", () => {
     const databaseState = await inspectDatabase(databaseName);
     expect(databaseState.quarantined).toEqual([]);
     expect(databaseState.active).toMatchObject({
-      envelope: { saveFormatVersion: 6, world: expectedWorld },
+      envelope: { saveFormatVersion: 8, world: expectedWorld },
     });
   });
 
@@ -462,7 +613,7 @@ describe("自动存档", () => {
     const databaseState = await inspectDatabase(databaseName);
     expect(databaseState.quarantined).toEqual([]);
     expect(databaseState.active).toMatchObject({
-      envelope: { saveFormatVersion: 6 },
+      envelope: { saveFormatVersion: 8 },
     });
   });
 
@@ -504,13 +655,13 @@ describe("自动存档", () => {
     expect(databaseState.quarantined).toEqual([]);
     expect(databaseState.active).toMatchObject({
       envelope: {
-        saveFormatVersion: 6,
+        saveFormatVersion: 8,
         world: { buildings: [{ id: 1, x: 1, y: 14, level: 1 }] },
       },
     });
   });
 
-  it("合法 v2 存档迁移为 v6 并原位回写，保留道路且补住户口粮", async () => {
+  it("合法 v2 存档迁移为 v7 并原位回写，保留道路且补住户口粮", async () => {
     const databaseName = `empire-v2-${crypto.randomUUID()}`;
     const initialStore = new GameSaveStore({
       databaseName,
@@ -539,6 +690,7 @@ describe("自动存档", () => {
     });
     const expectedWorld: WorldSnapshot = {
       map: { ...legacyEnvelope.world.map },
+      terrain: { ...DEFAULT_TERRAIN_CONTRACT },
       tick: legacyEnvelope.world.tick,
       revision: legacyEnvelope.world.revision,
       buildings: [
@@ -549,10 +701,12 @@ describe("自动存档", () => {
         },
       ],
       roads: legacyEnvelope.world.roads.map((road) => ({ ...road })),
+      walls: [],
       households: legacyEnvelope.world.households.map((household) => ({
         ...household,
         foodReserveTicks: 3,
         foodQuality: "bland",
+        ...householdLivelihoodDefaults,
       })),
       migrants: [],
     };
@@ -566,7 +720,7 @@ describe("自动存档", () => {
     expect(databaseState.quarantined).toEqual([]);
     expect(databaseState.active).toMatchObject({
       envelope: {
-        saveFormatVersion: 6,
+        saveFormatVersion: 8,
         world: expectedWorld,
       },
     });

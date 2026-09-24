@@ -2,20 +2,25 @@ import { describe, expect, it } from "vitest";
 
 import {
   COMMERCE_ASSETS,
-  CITIZEN_ASSETS,
+  CITIZEN_WALK_ASSETS,
   CITIZEN_WORK_ASSETS,
   ENTERTAINMENT_ASSETS,
   GOVERNMENT_ASSETS,
+  GROUND_COVER_ATLAS,
   ROAD_AUTOTILE_ASSETS,
   INDUSTRY_ASSETS,
   MILITARY_ASSETS,
   RUNTIME_ASSETS,
+  WALL_AUTOTILE_ASSET,
+  WALL_JUNCTION_ASSETS,
   assetForBuilding,
   assetForCitizen,
   assetForFarmCrop,
   assetForHouseStage,
   assetForMigrant,
   assetForRoadMask,
+  wallAtlasFrame,
+  wallVisualForMask,
 } from "./runtime-assets";
 
 describe("真实运行素材清单", () => {
@@ -33,12 +38,31 @@ describe("真实运行素材清单", () => {
         "house.plot",
         "house.roof",
         "terrain.loess",
+        "terrain.loess-slope-face",
         "villager.build.a",
         "villager.build.b",
         "villager.walk.a",
         "villager.walk.b",
       ].sort(),
     );
+  });
+
+  it("台地高差使用独立的黄土坡面位图而不是等高线代替", () => {
+    expect(RUNTIME_ASSETS["terrain.loess-slope-face"]).toMatchObject({
+      url: "/assets/runtime/v1/terrain/loess-slope-face-v2.png",
+      pixelWidth: 1254,
+      pixelHeight: 1254,
+    });
+  });
+
+  it("郊区杂草、草甸、枯草与碎石使用独立透明图集", () => {
+    expect(GROUND_COVER_ATLAS).toMatchObject({
+      url: "/assets/runtime/v8/terrain/ground-cover-atlas.png",
+      pixelWidth: 1254,
+      pixelHeight: 1254,
+      rows: 2,
+      columns: 2,
+    });
   });
 
   it("所有可见素材来自版本化运行目录并声明有效尺寸和脚点", () => {
@@ -60,22 +84,22 @@ describe("真实运行素材清单", () => {
     expect(assetForMigrant("walking", 1).url).toContain("/walk-b.png");
     expect(assetForMigrant("building", 0).url).toContain("/build-a.png");
     expect(assetForCitizen("farmer", "walking", 1).url).toContain(
-      "/runtime/v4/people/farmer-walk-1.png",
+      "/runtime/v6/people/farmer-walk-4x8.png",
     );
     expect(assetForCitizen("artisan", "working", 0).url).toContain(
       "/runtime/v4/people/artisan-work-0.png",
     );
   });
 
-  it("四类职业人物各有两帧独立的 v4 高保真素材", () => {
-    for (const [role, assets] of Object.entries(CITIZEN_ASSETS)) {
-      expect(assets).toHaveLength(2);
-      expect(new Set(assets.map((asset) => asset.url)).size).toBe(2);
-      for (const asset of assets) {
-        expect(asset.url).toContain(`/runtime/v4/people/${role}-walk-`);
-        expect(asset.pixelHeight).toBeGreaterThan(700);
-        expect(asset.worldHeight).toBeGreaterThan(2);
-      }
+  it("四类职业人物各有一张四方向八帧 v6 步行 sheet", () => {
+    for (const [role, asset] of Object.entries(CITIZEN_WALK_ASSETS)) {
+      expect(asset.url).toBe(`/assets/runtime/v6/people/${role}-walk-4x8.png`);
+      expect(asset.rows).toBe(4);
+      expect(asset.columns).toBe(8);
+      expect(asset.pixelWidth).toBe(256);
+      expect(asset.pixelHeight).toBe(256);
+      expect(asset.frameDurationMs).toBe(120);
+      expect(asset.worldHeight).toBeGreaterThan(3);
     }
     for (const [role, assets] of Object.entries(CITIZEN_WORK_ASSETS)) {
       expect(assets).toHaveLength(2);
@@ -138,9 +162,12 @@ describe("真实运行素材清单", () => {
     }
   });
 
-  it("城门使用独立地面锚点，避免入口和道路错位", () => {
+  it("城门使用独立地面锚点，并向地图左侧校正半格", () => {
     expect(RUNTIME_ASSETS["gate.main"].groundingFootprint).toBeGreaterThan(0);
     expect(RUNTIME_ASSETS["gate.main"].groundingFootprint).toBeLessThan(1);
+    expect(RUNTIME_ASSETS["gate.main"]).toMatchObject({
+      placementOffsetTiles: { x: -0.5, z: 0 },
+    });
   });
 
   it("道路 0～15 四邻接掩码一一对应 16 张 v2 真实贴图", () => {
@@ -156,5 +183,71 @@ describe("真实运行素材清单", () => {
       expect(asset.pixelWidth).toBe(512);
       expect(asset.pixelHeight).toBe(512);
     }
+  });
+
+  it("城墙基础帧来自 4×4 v6 手绘图集", () => {
+    expect(WALL_AUTOTILE_ASSET).toMatchObject({
+      url: "/assets/runtime/v6/defense/wall-autotiles-4x4.png",
+      pixelWidth: 1254,
+      pixelHeight: 1254,
+      rows: 4,
+      columns: 4,
+    });
+    expect(
+      Array.from({ length: 16 }, (_, mask) => wallAtlasFrame(mask)),
+    ).toEqual(
+      [0, 1, 2, 3, 1, 1, 7, 10, 2, 4, 2, 12, 8, 13, 14, 15].map((frame) => ({
+        row: Math.floor(frame / 4),
+        column: frame % 4,
+      })),
+    );
+  });
+
+  it("四种拐角、四种 T 形和十字形使用同源半墙拼接且共享画布中心", () => {
+    const junctionMasks = [3, 6, 9, 12, 7, 11, 13, 14, 15] as const;
+    expect(
+      Object.keys(WALL_JUNCTION_ASSETS)
+        .map(Number)
+        .sort((a, b) => a - b),
+    ).toEqual([...junctionMasks].sort((a, b) => a - b));
+    for (const mask of junctionMasks) {
+      expect(wallVisualForMask(mask)).toMatchObject({
+        kind: "asset",
+        asset: {
+          url: `/assets/runtime/v8/defense/wall-junction-${mask.toString(16).padStart(2, "0")}.png`,
+          pixelWidth: 314,
+          pixelHeight: 314,
+          groundingFootprint: 0.78,
+        },
+      });
+    }
+    expect(
+      new Set(Object.values(WALL_JUNCTION_ASSETS).map((asset) => asset.url))
+        .size,
+    ).toBe(9);
+  });
+
+  it("城门南北轴取左下到右上的直墙帧，东西轴取另一条直墙帧", () => {
+    expect(wallAtlasFrame(0b0101)).toEqual({ row: 0, column: 1 });
+    expect(wallAtlasFrame(0b1010)).toEqual({ row: 0, column: 2 });
+  });
+
+  it("左右拐角也通过统一交汇素材选择器接入", () => {
+    expect(wallVisualForMask(0b0110)).toMatchObject({
+      kind: "asset",
+      asset: { url: "/assets/runtime/v8/defense/wall-junction-06.png" },
+    });
+    expect(wallVisualForMask(0b1001)).toMatchObject({
+      kind: "asset",
+      asset: { url: "/assets/runtime/v8/defense/wall-junction-09.png" },
+    });
+    expect(wallVisualForMask(0b0011)).toMatchObject({
+      kind: "asset",
+      asset: { url: "/assets/runtime/v8/defense/wall-junction-03.png" },
+    });
+    expect(wallVisualForMask(0b1100)).toMatchObject({
+      kind: "asset",
+      asset: { url: "/assets/runtime/v8/defense/wall-junction-0c.png" },
+    });
   });
 });

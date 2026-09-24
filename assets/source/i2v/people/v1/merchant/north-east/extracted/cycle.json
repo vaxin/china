@@ -1,0 +1,88 @@
+{
+  "video": "assets/source/i2v/people/v1/merchant/north-east/raw.mp4",
+  "sourceFrameCount": 121,
+  "fps": 24.0,
+  "cycleStartFrame": 24,
+  "cyclePeriodFrames": 25,
+  "cycleDurationSeconds": 1.0416666666666667,
+  "selectedSourceFrames": [
+    24,
+    27,
+    30,
+    33,
+    36,
+    40,
+    43,
+    46
+  ],
+  "bestPeriodScore": 0.001987351104617119,
+  "nextBestPeriod": {
+    "frames": 26,
+    "score": 0.0023827531840652227
+  },
+  "adjacentFrameDifferences": [
+    0.011913085356354713,
+    0.014230022206902504,
+    0.005781864747405052,
+    0.008396278135478497,
+    0.018233083188533783,
+    0.008897467516362667,
+    0.00526886060833931,
+    0.005500543396919966
+  ],
+  "foregroundBounds": [
+    [
+      76,
+      40,
+      171,
+      247
+    ],
+    [
+      85,
+      38,
+      173,
+      242
+    ],
+    [
+      77,
+      39,
+      173,
+      243
+    ],
+    [
+      77,
+      41,
+      173,
+      244
+    ],
+    [
+      85,
+      40,
+      172,
+      244
+    ],
+    [
+      77,
+      38,
+      170,
+      245
+    ],
+    [
+      71,
+      40,
+      170,
+      247
+    ],
+    [
+      73,
+      41,
+      171,
+      248
+    ]
+  ],
+  "outputs": {
+    "sheet": "assets/source/i2v/people/v1/merchant/north-east/extracted/cycle-1x8.png",
+    "contact": "assets/source/i2v/people/v1/merchant/north-east/extracted/contact.png",
+    "gif": "assets/source/i2v/people/v1/merchant/north-east/extracted/cycle.gif"
+  }
+}

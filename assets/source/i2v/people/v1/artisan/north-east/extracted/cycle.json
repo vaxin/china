@@ -1,0 +1,88 @@
+{
+  "video": "assets/source/i2v/people/v1/artisan/north-east/raw.mp4",
+  "sourceFrameCount": 121,
+  "fps": 24.0,
+  "cycleStartFrame": 26,
+  "cyclePeriodFrames": 22,
+  "cycleDurationSeconds": 0.9166666666666666,
+  "selectedSourceFrames": [
+    26,
+    29,
+    32,
+    34,
+    37,
+    40,
+    42,
+    45
+  ],
+  "bestPeriodScore": 0.004304395988583565,
+  "nextBestPeriod": {
+    "frames": 23,
+    "score": 0.0062118712812662125
+  },
+  "adjacentFrameDifferences": [
+    0.015226256102323532,
+    0.007408974226564169,
+    0.006061210762709379,
+    0.016683675348758698,
+    0.013829241506755352,
+    0.004018007777631283,
+    0.012778900563716888,
+    0.009706920944154263
+  ],
+  "foregroundBounds": [
+    [
+      99,
+      23,
+      166,
+      243
+    ],
+    [
+      99,
+      25,
+      178,
+      242
+    ],
+    [
+      94,
+      25,
+      171,
+      244
+    ],
+    [
+      96,
+      24,
+      166,
+      245
+    ],
+    [
+      93,
+      23,
+      173,
+      246
+    ],
+    [
+      89,
+      25,
+      181,
+      247
+    ],
+    [
+      90,
+      25,
+      179,
+      246
+    ],
+    [
+      95,
+      24,
+      167,
+      244
+    ]
+  ],
+  "outputs": {
+    "sheet": "assets/source/i2v/people/v1/artisan/north-east/extracted/cycle-1x8.png",
+    "contact": "assets/source/i2v/people/v1/artisan/north-east/extracted/contact.png",
+    "gif": "assets/source/i2v/people/v1/artisan/north-east/extracted/cycle.gif"
+  }
+}

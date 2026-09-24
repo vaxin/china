@@ -101,7 +101,7 @@ describe("农场与粮仓建造", () => {
       accepted: false,
       reasonCode: "occupied",
     });
-    expect(build(createWorld(), "granary", 31, 31).result).toMatchObject({
+    expect(build(createWorld(), "granary", 63, 63).result).toMatchObject({
       accepted: false,
       reasonCode: "out-of-bounds",
     });

@@ -1,0 +1,88 @@
+{
+  "video": "assets/source/i2v/people/v1/farmer/north-east/raw.mp4",
+  "sourceFrameCount": 121,
+  "fps": 24.0,
+  "cycleStartFrame": 32,
+  "cyclePeriodFrames": 24,
+  "cycleDurationSeconds": 1.0,
+  "selectedSourceFrames": [
+    32,
+    35,
+    38,
+    41,
+    44,
+    47,
+    50,
+    53
+  ],
+  "bestPeriodScore": 0.0027804882265627384,
+  "nextBestPeriod": {
+    "frames": 25,
+    "score": 0.003128235461190343
+  },
+  "adjacentFrameDifferences": [
+    0.011337271891534328,
+    0.011362822726368904,
+    0.008814494125545025,
+    0.013240912929177284,
+    0.01131938025355339,
+    0.014057396911084652,
+    0.016464415937662125,
+    0.004393810871988535
+  ],
+  "foregroundBounds": [
+    [
+      86,
+      26,
+      188,
+      248
+    ],
+    [
+      91,
+      26,
+      182,
+      246
+    ],
+    [
+      96,
+      24,
+      172,
+      245
+    ],
+    [
+      98,
+      24,
+      172,
+      245
+    ],
+    [
+      99,
+      27,
+      182,
+      245
+    ],
+    [
+      96,
+      25,
+      176,
+      244
+    ],
+    [
+      92,
+      23,
+      177,
+      245
+    ],
+    [
+      87,
+      24,
+      186,
+      247
+    ]
+  ],
+  "outputs": {
+    "sheet": "assets/source/i2v/people/v1/farmer/north-east/extracted/cycle-1x8.png",
+    "contact": "assets/source/i2v/people/v1/farmer/north-east/extracted/contact.png",
+    "gif": "assets/source/i2v/people/v1/farmer/north-east/extracted/cycle.gif"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "sheetCount": 4,
+  "poseCount": 128,
+  "directionOrderAudited": true,
+  "pivotAlignment": {
+    "method": "trimmed upper-body axis",
+    "targetX": 128,
+    "maximumAllowedDeviationPx": 2,
+    "maximumObservedDeviationPx": 0.625
+  },
+  "grid": { "rows": 4, "columns": 8 },
+  "cellSize": [256, 256],
+  "directions": ["south-east", "south-west", "north-west", "north-east"],
+  "sheets": {
+    "farmer": { "passed": true, "baselineDeviationPx": 0, "bodyAxisDeviationPx": 0.5, "maximumHeightDrift": 0.004545454545454545, "errors": [], "warnings": [] },
+    "artisan": { "passed": true, "baselineDeviationPx": 0, "bodyAxisDeviationPx": 0.5, "maximumHeightDrift": 0.00909090909090909, "errors": [], "warnings": [] },
+    "merchant": { "passed": true, "baselineDeviationPx": 0, "bodyAxisDeviationPx": 0.625, "maximumHeightDrift": 0.004878048780487805, "errors": [], "warnings": [] },
+    "official": { "passed": true, "baselineDeviationPx": 0, "bodyAxisDeviationPx": 0.5, "maximumHeightDrift": 0.004545454545454545, "errors": [], "warnings": [] }
+  }
+}
